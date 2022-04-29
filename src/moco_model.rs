@@ -54,7 +54,7 @@ pub struct Activitie {
     pub remote_id: Value,
     #[serde(rename = "remote_url")]
     pub remote_url: Value,
-    pub project: Project,
+    pub project: ActivitieProject,
     pub task: Task,
     pub customer: Customer,
     pub user: User,
@@ -70,7 +70,7 @@ pub struct Activitie {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Project {
+pub struct ActivitieProject {
     pub id: i64,
     pub name: String,
     pub billable: bool,
@@ -89,4 +89,48 @@ pub struct Task {
 pub struct Customer {
     pub id: i64,
     pub name: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateActivitie {
+    pub date: String,
+    pub description: String,
+    #[serde(rename = "project_id")]
+    pub project_id: i64,
+    #[serde(rename = "task_id")]
+    pub task_id: i64,
+    pub hours: f64,
+    pub tag: Option<String>,
+    #[serde(rename = "remote_service")]
+    pub remote_service: Option<String>,
+    #[serde(rename = "remote_id")]
+    pub remote_id: Option<String>,
+    #[serde(rename = "remote_url")]
+    pub remote_url: Option<String>,
+}
+
+//Project
+
+pub type Projects = Vec<Project>;
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Project {
+    pub id: i64,
+    pub identifier: String,
+    pub name: String,
+    pub active: bool,
+    pub billable: bool,
+    pub customer: Customer,
+    pub tasks: Vec<ProjectTask>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectTask {
+    pub id: i64,
+    pub name: String,
+    pub active: bool,
+    pub billable: bool,
 }

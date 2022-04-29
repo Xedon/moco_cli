@@ -9,7 +9,7 @@ use reqwest::{Client, Response};
 
 use crate::{
     config::AppConfig,
-    moco_model::{Activitie, Employment},
+    moco_model::{Activitie, CreateActivitie, Employment, Projects},
 };
 pub struct MocoClient {
     client: Client,
@@ -78,6 +78,37 @@ impl MocoClient {
                 .send()
                 .await?
                 .json::<Vec<Activitie>>()
+                .await?),
+            None => Err(Box::new(MocoClientError::ConfigError)),
+        }
+    }
+
+    pub async fn create_activitie(&self, payload: &CreateActivitie) -> Result<(), Box<dyn Error>> {
+        match &self.config.borrow().api_key {
+            Some(api_key) => {
+                self.client
+                    .post("https://mayflower.mocoapp.com/api/v1/activities")
+                    .header("Authorization", format!("Token token={}", api_key))
+                    .json(payload)
+                    .send()
+                    .await?
+                    .json::<Vec<Activitie>>()
+                    .await?;
+                Ok(())
+            }
+            None => Err(Box::new(MocoClientError::ConfigError)),
+        }
+    }
+
+    pub async fn get_assigned_projects(&self) -> Result<Projects, Box<dyn Error>> {
+        match &self.config.borrow().api_key {
+            Some(api_key) => Ok(self
+                .client
+                .get("https://mayflower.mocoapp.com/api/v1/projects/assigned")
+                .header("Authorization", format!("Token token={}", api_key))
+                .send()
+                .await?
+                .json::<Projects>()
                 .await?),
             None => Err(Box::new(MocoClientError::ConfigError)),
         }

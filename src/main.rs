@@ -8,12 +8,21 @@ use std::{
 use chrono::{Date, DateTime, Datelike, Duration, Local, Utc};
 use moco_client::MocoClient;
 
+use crate::moco_model::CreateActivitie;
+
 mod cli;
 mod config;
 mod jira;
 mod moco_client;
 mod moco_model;
 mod tempo;
+
+fn read_line() -> Result<String, Box<dyn Error>> {
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input)?;
+    input.remove(input.len() - 1);
+    Ok(input)
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -24,22 +33,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     match args.command {
         cli::Commands::Login => {
-            let mut firstname = String::new();
-            let mut lastname = String::new();
-
-            let mut api_key = String::new();
             println!("Enter your personal api key");
-            std::io::stdin().read_line(&mut api_key)?;
-            api_key.remove(api_key.len() - 1);
+            let api_key = read_line()?;
             config.borrow_mut().api_key = Some(api_key);
 
             println!("Enter firstname");
-            std::io::stdin().read_line(&mut firstname)?;
-            firstname.remove(firstname.len() - 1);
+            let firstname = read_line()?;
 
             println!("Enter lastname");
-            std::io::stdin().read_line(&mut lastname)?;
-            lastname.remove(lastname.len() - 1);
+            let lastname = read_line()?;
 
             let client_id = moco_client.get_user_id(firstname, lastname).await?;
 
@@ -68,7 +70,42 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 )
             }
         }
-        cli::Commands::New => todo!(),
+        cli::Commands::New => {
+            let projects = moco_client.get_assigned_projects().await?;
+            println!("Chose your Project:");
+
+            for (index, project) in projects.iter().enumerate() {
+                println!("{} {} {}", index, project.customer.name, project.name)
+            }
+
+            let project_index = read_line()?;
+            let project = &projects[project_index.parse::<usize>()?];
+
+            println!("Chose your Task:");
+
+            for (index, task) in project.tasks.iter().enumerate() {
+                println!("{} {}", index, task.name);
+            }
+
+            let task_index = read_line()?;
+            let task = &project.tasks[task_index.parse::<usize>()?];
+
+            println!("Date (YYYY-mm-DD)");
+            let date = read_line()?;
+
+            println!("Time in Hours");
+            let hours = read_line()?;
+
+            moco_client
+                .create_activitie(&CreateActivitie {
+                    date,
+                    project_id: project.id,
+                    task_id: task.id,
+                    hours: hours.parse::<f64>()?,
+                    ..Default::default()
+                })
+                .await?;
+        }
         cli::Commands::Add => todo!(),
         cli::Commands::Edit => todo!(),
         cli::Commands::Rm => todo!(),
