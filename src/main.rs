@@ -1,6 +1,8 @@
 use std::{
+    cell::RefCell,
     error::Error,
     fs::{create_dir, File},
+    sync::Arc,
 };
 
 use moco_client::MocoClient;
@@ -16,8 +18,8 @@ mod tempo;
 async fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
     let args = cli::init();
-    let mut config = config::init()?;
-    let moco_client = MocoClient::new();
+    let config = Arc::new(RefCell::new(config::init()?));
+    let moco_client = MocoClient::new(&config);
 
     match args.command {
         cli::Commands::Login => {
@@ -28,7 +30,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             println!("Enter your personal api key");
             std::io::stdin().read_line(&mut api_key)?;
             api_key.remove(api_key.len() - 1);
-            config.api_key = Some(api_key);
+            config.borrow_mut().api_key = Some(api_key);
 
             println!("Enter firstname");
             std::io::stdin().read_line(&mut firstname)?;
@@ -38,13 +40,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
             std::io::stdin().read_line(&mut lastname)?;
             lastname.remove(lastname.len() - 1);
 
-            let client_id = moco_client
-                .get_user_id(&config, firstname, lastname)
-                .await?;
+            let client_id = moco_client.get_user_id(firstname, lastname).await?;
 
             println!("{:?}", client_id);
-            config.user_id = client_id;
-            config.write_config()?;
+            config.borrow_mut().user_id = client_id;
+            config.borrow_mut().write_config()?;
             println!("Config written!")
         }
         cli::Commands::List => todo!(),
