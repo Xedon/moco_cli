@@ -59,7 +59,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: target/release/${{ matrix.filename }}
-          asset_name: mococli-${{ runner.os }}
+          asset_path: target/release/
+          asset_name: ${{ runner.os }}-${{ matrix.filename }}
           asset_content_type: application/octet-stream
         if: ${{ github.ref_type == 'tag' && github.event.base_ref=='refs/heads/main' }}
