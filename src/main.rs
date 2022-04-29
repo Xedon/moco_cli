@@ -5,6 +5,7 @@ use std::{
     sync::Arc,
 };
 
+use chrono::{Date, DateTime, Datelike, Duration, Local, Utc};
 use moco_client::MocoClient;
 
 mod cli;
@@ -47,7 +48,26 @@ async fn main() -> Result<(), Box<dyn Error>> {
             config.borrow_mut().write_config()?;
             println!("Config written!")
         }
-        cli::Commands::List => todo!(),
+        cli::Commands::List => {
+            use now::DateTimeNow;
+            let today = Utc::now();
+            let monday = today.beginning_of_week();
+            let sunday = today.end_of_week();
+
+            let activities = moco_client
+                .get_activities(
+                    monday.format("%Y-%m-%d").to_string(),
+                    sunday.format("%Y-%m-%d").to_string(),
+                )
+                .await?;
+
+            for activitie in activities.iter() {
+                println!(
+                    "{} {}h {} ",
+                    activitie.date, activitie.hours, activitie.description
+                )
+            }
+        }
         cli::Commands::New => todo!(),
         cli::Commands::Add => todo!(),
         cli::Commands::Edit => todo!(),

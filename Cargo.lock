@@ -675,6 +675,7 @@ dependencies = [
  "derive_more",
  "dirs",
  "env_logger",
+ "now",
  "reqwest",
  "serde",
  "serde_json",
@@ -707,6 +708,15 @@ checksum = "a8903e5a29a317527874d0402f867152a3d21c908bb0b933e416c65e301d4c36"
 dependencies = [
  "memchr",
  "minimal-lexical",
+]
+
+[[package]]
+name = "now"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "84e240744647b9b9496ff378a31be1e89a44a8e867dd4c5c7c5be1f57694eedb"
+dependencies = [
+ "chrono",
 ]
 
 [[package]]

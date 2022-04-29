@@ -7,7 +7,10 @@ use std::{
 
 use reqwest::{Client, Response};
 
-use crate::{config::AppConfig, moco_model::Employment};
+use crate::{
+    config::AppConfig,
+    moco_model::{Activitie, Employment},
+};
 pub struct MocoClient {
     client: Client,
     config: Arc<RefCell<AppConfig>>,
@@ -50,6 +53,32 @@ impl MocoClient {
                     })
                     .map(|employment| employment.user.id))
             }
+            None => Err(Box::new(MocoClientError::ConfigError)),
+        }
+    }
+
+    pub async fn get_activities(
+        &self,
+        from: String,
+        to: String,
+    ) -> Result<Vec<Activitie>, Box<dyn Error>> {
+        match &self.config.borrow().api_key {
+            Some(api_key) => Ok(self
+                .client
+                .get("https://mayflower.mocoapp.com/api/v1/activities")
+                .query(&[
+                    ("from", from),
+                    ("to", to),
+                    (
+                        "user_id",
+                        format!("{}", &self.config.borrow().user_id.unwrap()),
+                    ),
+                ])
+                .header("Authorization", format!("Token token={}", api_key))
+                .send()
+                .await?
+                .json::<Vec<Activitie>>()
+                .await?),
             None => Err(Box::new(MocoClientError::ConfigError)),
         }
     }
