@@ -11,7 +11,7 @@ pub struct JiraTempoClient {
 
 #[derive(Debug, derive_more::Display)]
 enum JiraTempoClientError {
-    ConfigError,
+    NotLoggedIn,
 }
 impl Error for JiraTempoClientError {}
 

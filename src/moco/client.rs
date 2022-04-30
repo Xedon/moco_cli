@@ -13,7 +13,7 @@ pub struct MocoClient {
 
 #[derive(Debug, derive_more::Display)]
 enum MocoClientError {
-    ConfigError,
+    NotLoggedIn,
 }
 impl Error for MocoClientError {}
 
@@ -30,7 +30,7 @@ impl MocoClient {
         firstname: String,
         lastname: String,
     ) -> Result<Option<i64>, Box<dyn Error>> {
-        match &self.config.borrow().api_key {
+        match &self.config.borrow().moco_api_key {
             Some(api_key) => {
                 let employments = self
                     .client
@@ -48,7 +48,7 @@ impl MocoClient {
                     })
                     .map(|employment| employment.user.id))
             }
-            None => Err(Box::new(MocoClientError::ConfigError)),
+            None => Err(Box::new(MocoClientError::NotLoggedIn)),
         }
     }
 
@@ -57,7 +57,7 @@ impl MocoClient {
         from: String,
         to: String,
     ) -> Result<Vec<Activitie>, Box<dyn Error>> {
-        match &self.config.borrow().api_key {
+        match &self.config.borrow().moco_api_key {
             Some(api_key) => Ok(self
                 .client
                 .get("https://mayflower.mocoapp.com/api/v1/activities")
@@ -66,7 +66,7 @@ impl MocoClient {
                     ("to", to),
                     (
                         "user_id",
-                        format!("{}", &self.config.borrow().user_id.unwrap()),
+                        format!("{}", &self.config.borrow().moco_user_id.unwrap()),
                     ),
                 ])
                 .header("Authorization", format!("Token token={}", api_key))
@@ -74,12 +74,12 @@ impl MocoClient {
                 .await?
                 .json::<Vec<Activitie>>()
                 .await?),
-            None => Err(Box::new(MocoClientError::ConfigError)),
+            None => Err(Box::new(MocoClientError::NotLoggedIn)),
         }
     }
 
     pub async fn create_activitie(&self, payload: &CreateActivitie) -> Result<(), Box<dyn Error>> {
-        match &self.config.borrow().api_key {
+        match &self.config.borrow().moco_api_key {
             Some(api_key) => {
                 self.client
                     .post("https://mayflower.mocoapp.com/api/v1/activities")
@@ -91,12 +91,12 @@ impl MocoClient {
                     .await?;
                 Ok(())
             }
-            None => Err(Box::new(MocoClientError::ConfigError)),
+            None => Err(Box::new(MocoClientError::NotLoggedIn)),
         }
     }
 
     pub async fn get_assigned_projects(&self) -> Result<Projects, Box<dyn Error>> {
-        match &self.config.borrow().api_key {
+        match &self.config.borrow().moco_api_key {
             Some(api_key) => Ok(self
                 .client
                 .get("https://mayflower.mocoapp.com/api/v1/projects/assigned")
@@ -105,7 +105,7 @@ impl MocoClient {
                 .await?
                 .json::<Projects>()
                 .await?),
-            None => Err(Box::new(MocoClientError::ConfigError)),
+            None => Err(Box::new(MocoClientError::NotLoggedIn)),
         }
     }
 }

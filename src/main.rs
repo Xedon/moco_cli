@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 std::io::stdout().flush()?;
 
                 let api_key = read_line()?;
-                config.borrow_mut().api_key = Some(api_key);
+                config.borrow_mut().moco_api_key = Some(api_key);
 
                 print!("Enter firstname: ");
                 std::io::stdout().flush()?;
@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                 let client_id = moco_client.get_user_id(firstname, lastname).await?;
 
-                config.borrow_mut().user_id = client_id;
+                config.borrow_mut().moco_user_id = client_id;
                 config.borrow_mut().write_config()?;
                 println!("🤩 Logged In 🤩")
             }

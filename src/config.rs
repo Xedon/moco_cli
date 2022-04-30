@@ -7,12 +7,13 @@ use std::{
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct AppConfig {
-    pub api_key: Option<String>,
-    pub user_id: Option<i64>,
+    pub moco_api_key: Option<String>,
+    pub moco_user_id: Option<i64>,
+    pub jira_tempo_api_key: Option<String>,
 }
 
 fn get_config_path() -> Option<std::path::PathBuf> {
-    dirs::config_dir().map(|dir| dir.join("mococp").join("mococp.json"))
+    dirs::config_dir().map(|dir| dir.join("mococli").join("mococp.json"))
 }
 
 pub fn init() -> Result<AppConfig, Box<dyn Error>> {
