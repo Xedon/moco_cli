@@ -1,16 +1,11 @@
-use std::{
-    cell::RefCell,
-    error::Error,
-    rc::Rc,
-    sync::{Arc, RwLock},
-};
+use std::{cell::RefCell, error::Error, sync::Arc};
 
-use reqwest::{Client, Response};
+use reqwest::Client;
 
-use crate::{
-    config::AppConfig,
-    moco_model::{Activitie, CreateActivitie, Employment, Projects},
-};
+use crate::moco::model::{Activitie, CreateActivitie, Employment, Projects};
+
+use crate::config::AppConfig;
+
 pub struct MocoClient {
     client: Client,
     config: Arc<RefCell<AppConfig>>,

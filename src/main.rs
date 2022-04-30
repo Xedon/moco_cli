@@ -1,20 +1,14 @@
-use std::{
-    cell::RefCell,
-    error::Error,
-    fs::{create_dir, File},
-    sync::Arc,
-};
+use std::{cell::RefCell, error::Error, sync::Arc};
 
-use chrono::{Date, DateTime, Datelike, Duration, Local, Utc};
-use moco_client::MocoClient;
+use crate::moco::client::MocoClient;
+use chrono::Utc;
 
-use crate::moco_model::CreateActivitie;
+use crate::moco::model::CreateActivitie;
 
 mod cli;
 mod config;
-mod jira;
-mod moco_client;
-mod moco_model;
+mod jira_tempo;
+mod moco;
 mod tempo;
 
 fn read_line() -> Result<String, Box<dyn Error>> {
@@ -72,8 +66,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         cli::Commands::New => {
             let projects = moco_client.get_assigned_projects().await?;
-            println!("Chose your Project:");
 
+            println!("Chose your Project:");
             for (index, project) in projects.iter().enumerate() {
                 println!("{} {} {}", index, project.customer.name, project.name)
             }
