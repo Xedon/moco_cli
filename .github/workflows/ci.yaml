@@ -39,6 +39,7 @@ jobs:
         with:
           command: build
           args: --release --all-features
+      - run: echo "${{ github.event }}"
       - name: Upload Release Asset
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1
@@ -49,4 +50,4 @@ jobs:
           asset_path: target/release/${{ matrix.filename }}
           asset_name: ${{ runner.os }}-${{ matrix.filename }}
           asset_content_type: application/octet-stream
-        if: ${{ github.event = 'release' }}
+        if: ${{ github.event == 'published' }}
