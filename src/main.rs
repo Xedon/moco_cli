@@ -1,4 +1,4 @@
-use std::{cell::RefCell, error::Error, sync::Arc};
+use std::{cell::RefCell, error::Error, io::Write, sync::Arc};
 
 use crate::moco::client::MocoClient;
 use chrono::Utc;
@@ -27,22 +27,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     match args.command {
         cli::Commands::Login => {
-            println!("Enter your personal api key");
+            print!("Enter your personal api key: ");
+            std::io::stdout().flush()?;
+
             let api_key = read_line()?;
             config.borrow_mut().api_key = Some(api_key);
 
-            println!("Enter firstname");
+            print!("Enter firstname: ");
+            std::io::stdout().flush()?;
             let firstname = read_line()?;
 
-            println!("Enter lastname");
+            print!("Enter lastname:  ");
+            std::io::stdout().flush()?;
             let lastname = read_line()?;
 
             let client_id = moco_client.get_user_id(firstname, lastname).await?;
 
-            println!("{:?}", client_id);
             config.borrow_mut().user_id = client_id;
             config.borrow_mut().write_config()?;
-            println!("Config written!")
+            println!("🤩 Logged In 🤩")
         }
         cli::Commands::List => {
             use now::DateTimeNow;
@@ -66,23 +69,30 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         cli::Commands::New => {
             let projects = moco_client.get_assigned_projects().await?;
+            let project_index = render_list(
+                &projects,
+                "Index-Customer-Project-Project ID",
+                "Chose your Project:",
+                &(|(index, project)| {
+                    println!(
+                        "{}-{}-{}-{}",
+                        index, project.customer.name, project.name, project.id
+                    )
+                }),
+            )?;
 
-            println!("Chose your Project:");
-            for (index, project) in projects.iter().enumerate() {
-                println!("{} {} {}", index, project.customer.name, project.name)
-            }
+            let project = &projects[project_index];
 
-            let project_index = read_line()?;
-            let project = &projects[project_index.parse::<usize>()?];
+            let task_index = render_list(
+                &project.tasks,
+                "Index-Task-Task ID",
+                "Chose your Task:",
+                &(|(index, task)| {
+                    println!("{}-{}-{}", index, task.name, task.id);
+                }),
+            )?;
 
-            println!("Chose your Task:");
-
-            for (index, task) in project.tasks.iter().enumerate() {
-                println!("{} {}", index, task.name);
-            }
-
-            let task_index = read_line()?;
-            let task = &project.tasks[task_index.parse::<usize>()?];
+            let task = &project.tasks[task_index];
 
             println!("Date (YYYY-mm-DD)");
             let date = read_line()?;
@@ -106,4 +116,29 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     Ok(())
+}
+
+fn render_list<T>(
+    list: &[T],
+    headline: &str,
+    promt: &str,
+    linenderer: &dyn Fn((usize, &T)),
+) -> Result<usize, Box<dyn Error>> {
+    loop {
+        println!("{}", headline);
+        for elem in list.iter().enumerate() {
+            linenderer(elem);
+        }
+        print!("{}", promt);
+        std::io::stdout().flush()?;
+
+        let index_input = read_line().map(|x| x.parse::<usize>().ok()).ok().flatten();
+
+        if let Some(index) = index_input {
+            if index < list.len() {
+                return Ok(index);
+            }
+        }
+        println!("Index Invallid")
+    }
 }
