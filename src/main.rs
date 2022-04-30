@@ -26,27 +26,31 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let moco_client = MocoClient::new(&config);
 
     match args.command {
-        cli::Commands::Login => {
-            print!("Enter your personal api key: ");
-            std::io::stdout().flush()?;
+        cli::Commands::Login { system } => match system {
+            cli::Login::Jira => todo!(),
+            cli::Login::Moco => {
+                println!("Moco Login");
+                print!("Enter your personal api key: ");
+                std::io::stdout().flush()?;
 
-            let api_key = read_line()?;
-            config.borrow_mut().api_key = Some(api_key);
+                let api_key = read_line()?;
+                config.borrow_mut().api_key = Some(api_key);
 
-            print!("Enter firstname: ");
-            std::io::stdout().flush()?;
-            let firstname = read_line()?;
+                print!("Enter firstname: ");
+                std::io::stdout().flush()?;
+                let firstname = read_line()?;
 
-            print!("Enter lastname:  ");
-            std::io::stdout().flush()?;
-            let lastname = read_line()?;
+                print!("Enter lastname:  ");
+                std::io::stdout().flush()?;
+                let lastname = read_line()?;
 
-            let client_id = moco_client.get_user_id(firstname, lastname).await?;
+                let client_id = moco_client.get_user_id(firstname, lastname).await?;
 
-            config.borrow_mut().user_id = client_id;
-            config.borrow_mut().write_config()?;
-            println!("🤩 Logged In 🤩")
-        }
+                config.borrow_mut().user_id = client_id;
+                config.borrow_mut().write_config()?;
+                println!("🤩 Logged In 🤩")
+            }
+        },
         cli::Commands::List => {
             use now::DateTimeNow;
             let today = Utc::now();
