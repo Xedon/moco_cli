@@ -1,29 +1,16 @@
 permissions:
   contents: write
 
-on: [push]
+on:
+  push:
+    branches: "*"
+  release:
+    types: [ published ]
 
 name: CI
 
 jobs:
-  create_release:
-    runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }} 
-    steps:
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-        if: ${{ github.ref_type == 'tag' && github.event.base_ref=='refs/heads/main' }}
   build:
-    needs: create_release
     strategy:
       matrix:
         include:
@@ -58,8 +45,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          upload_url: ${{ github.event.release.upload_url }}
           asset_path: target/release/${{ matrix.filename }}
           asset_name: ${{ runner.os }}-${{ matrix.filename }}
           asset_content_type: application/octet-stream
-        if: ${{ github.ref_type == 'tag' && github.event.base_ref=='refs/heads/main' }}
+        if: ${{ github.event = 'release' }}
