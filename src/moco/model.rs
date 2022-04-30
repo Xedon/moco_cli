@@ -51,7 +51,7 @@ pub struct Activitie {
     #[serde(rename = "remote_service")]
     pub remote_service: String,
     #[serde(rename = "remote_id")]
-    pub remote_id: Value,
+    pub remote_id: String,
     #[serde(rename = "remote_url")]
     pub remote_url: Value,
     pub project: ActivitieProject,
@@ -100,7 +100,8 @@ pub struct CreateActivitie {
     pub project_id: i64,
     #[serde(rename = "task_id")]
     pub task_id: i64,
-    pub hours: f64,
+    pub hours: Option<f64>,
+    pub seconds: Option<i64>,
     pub tag: Option<String>,
     #[serde(rename = "remote_service")]
     pub remote_service: Option<String>,

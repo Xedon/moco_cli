@@ -56,19 +56,30 @@ impl MocoClient {
         &self,
         from: String,
         to: String,
+        task_id: Option<String>,
+        term: Option<String>,
     ) -> Result<Vec<Activitie>, Box<dyn Error>> {
+        let mut parameter = vec![
+            ("from", from),
+            ("to", to),
+            (
+                "user_id",
+                format!("{}", &self.config.borrow().moco_user_id.unwrap()),
+            ),
+        ];
+
+        if let Some(x) = task_id {
+            parameter.push(("task_id", x))
+        }
+        if let Some(x) = term {
+            parameter.push(("term", x))
+        }
+
         match &self.config.borrow().moco_api_key {
             Some(api_key) => Ok(self
                 .client
                 .get("https://mayflower.mocoapp.com/api/v1/activities")
-                .query(&[
-                    ("from", from),
-                    ("to", to),
-                    (
-                        "user_id",
-                        format!("{}", &self.config.borrow().moco_user_id.unwrap()),
-                    ),
-                ])
+                .query(&parameter)
                 .header("Authorization", format!("Token token={}", api_key))
                 .send()
                 .await?

@@ -6,15 +6,23 @@ use serde::Serialize;
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Result {
-    time_spent_seconds: i64,
-    billable_seconds: i64,
-    start_date: String,
-    start_time: String,
-    created_at: String,
-    updated_at: String,
+    pub time_spent_seconds: i64,
+    pub billable_seconds: i64,
+    pub start_date: String,
+    pub start_time: String,
+    pub created_at: String,
+    pub updated_at: String,
+    pub issue: Issue,
+    pub description: String,
+    pub jira_worklog_id: i64,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Issue {
+    pub key: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Response {
-    results: Result,
+    pub results: Vec<Result>,
 }

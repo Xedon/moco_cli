@@ -10,6 +10,9 @@ pub fn init() -> Cli {
 pub struct Cli {
     #[clap(subcommand)]
     pub command: Commands,
+
+    #[clap(short, long)]
+    pub debug: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -23,10 +26,28 @@ pub enum Commands {
     Add,  // add moco time exiting entry
     Edit, // edit moco time/description of exising entry
     Rm,   // delete moco entry
+    Sync {
+        #[clap(arg_enum,default_value_t = Sync::Jira)]
+        system: Sync,
+
+        #[clap(short, long)]
+        today: bool,
+
+        #[clap(short, long)]
+        week: bool,
+
+        #[clap(short, long)]
+        month: bool,
+    },
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
 pub enum Login {
-    Jira,
     Moco,
+    Jira,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
+pub enum Sync {
+    Jira,
 }
