@@ -21,7 +21,16 @@ pub enum Commands {
         #[clap(arg_enum,default_value_t = Login::Moco)]
         system: Login,
     }, // login
-    List, // list existing moco entrys
+    List {
+        #[clap(short, long)]
+        today: bool,
+
+        #[clap(short, long)]
+        week: bool,
+
+        #[clap(short, long)]
+        month: bool,
+    }, // list existing moco entrys
     New,  // create moco entry
     Add,  // add moco time exiting entry
     Edit, // edit moco time/description of exising entry

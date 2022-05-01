@@ -1,12 +1,12 @@
 use std::{cell::RefCell, error::Error, io::Write, sync::Arc, vec};
 
-use crate::{moco::client::MocoClient, utils::render_table};
-use chrono::Utc;
+use crate::moco::client::MocoClient;
+
 use jira_tempo::client::JiraTempoClient;
+use utils::render_table;
 
 use crate::moco::model::CreateActivitie;
 
-use now::DateTimeNow;
 mod cli;
 mod config;
 mod jira_tempo;
@@ -66,28 +66,46 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 println!("🤩 Logged in 🤩")
             }
         },
-        cli::Commands::List => {
-            let today = Utc::now();
-            let monday = today.beginning_of_week();
-            let sunday = today.end_of_week();
+        cli::Commands::List { today, week, month } => {
+            let (from, to) = utils::select_from_to_date(today, week || !today && !month, month);
 
             let activities = moco_client
                 .get_activities(
-                    monday.format("%Y-%m-%d").to_string(),
-                    sunday.format("%Y-%m-%d").to_string(),
+                    from.format("%Y-%m-%d").to_string(),
+                    to.format("%Y-%m-%d").to_string(),
                     None,
                     None,
                 )
                 .await?;
 
-            for activitie in activities.iter() {
-                println!(
-                    "{} {}h {} ",
-                    activitie.date,
-                    activitie.hours,
-                    activitie.description.as_ref().unwrap_or(&String::new())
-                )
-            }
+            let mut list: Vec<Vec<String>> = activities
+                .iter()
+                .map(|activity| {
+                    vec![
+                        activity.customer.name.clone(),
+                        activity.task.name.clone(),
+                        activity.date.clone(),
+                        activity.hours.to_string(),
+                        activity
+                            .description
+                            .as_ref()
+                            .unwrap_or(&String::new())
+                            .to_string(),
+                    ]
+                })
+                .collect();
+            list.insert(
+                0,
+                vec![
+                    "Customer".to_string(),
+                    "Task".to_string(),
+                    "Date".to_string(),
+                    "Hours".to_string(),
+                    "Description".to_string(),
+                ],
+            );
+
+            render_table(list);
         }
         cli::Commands::New => {
             let (project, task) = promp_task_select(&moco_client).await?;
@@ -118,25 +136,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             month,
         } => match system {
             cli::Sync::Jira => {
-                let now = Utc::now();
-
-                let mut from = if today { Some(now) } else { None };
-                let mut to = if today { Some(now) } else { None };
-                from = if week {
-                    Some(now.beginning_of_week())
-                } else {
-                    from
-                };
-                to = if week { Some(now.end_of_week()) } else { to };
-                from = if month {
-                    Some(now.beginning_of_month())
-                } else {
-                    from
-                };
-                to = if month { Some(now.end_of_month()) } else { to };
-
-                let from = from.unwrap_or(now);
-                let to = to.unwrap_or(now);
+                let (from, to) = utils::select_from_to_date(today, week, month);
 
                 let worklogs = tempo_client
                     .get_worklogs(

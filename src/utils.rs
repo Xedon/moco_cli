@@ -1,5 +1,7 @@
 use std::{error::Error, io::Write};
 
+use chrono::Utc;
+
 pub fn read_line() -> Result<String, Box<dyn Error>> {
     let mut input = String::new();
     std::io::stdin().read_line(&mut input)?;
@@ -8,11 +10,19 @@ pub fn read_line() -> Result<String, Box<dyn Error>> {
 }
 
 pub fn render_table(list: Vec<Vec<String>>) {
-    let mut list_elem_max_length = vec![0; list.len()];
+    if list.is_empty() {
+        return;
+    }
+
+    let mut list_elem_max_length = vec![0; list.first().unwrap().len()];
 
     for row in list.iter() {
         for (column_index, column_content) in row.iter().enumerate() {
-            if list_elem_max_length[column_index] < column_content.len() {
+            if list_elem_max_length
+                .get(column_index)
+                .expect("Input list does not contain same column count")
+                < &column_content.len()
+            {
                 list_elem_max_length[column_index] = column_content.len();
             }
         }
@@ -54,4 +64,31 @@ pub fn render_list_select<T>(
         }
         println!("Index Invallid")
     }
+}
+
+pub fn select_from_to_date(
+    today: bool,
+    week: bool,
+    month: bool,
+) -> (chrono::DateTime<Utc>, chrono::DateTime<Utc>) {
+    use now::DateTimeNow;
+
+    let now = Utc::now();
+    let mut from = if today { Some(now) } else { None };
+    let mut to = if today { Some(now) } else { None };
+    from = if week {
+        Some(now.beginning_of_week())
+    } else {
+        from
+    };
+    to = if week { Some(now.end_of_week()) } else { to };
+    from = if month {
+        Some(now.beginning_of_month())
+    } else {
+        from
+    };
+    to = if month { Some(now.end_of_month()) } else { to };
+    let from = from.unwrap_or(now);
+    let to = to.unwrap_or(now);
+    (from, to)
 }
