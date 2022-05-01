@@ -1,6 +1,6 @@
-use std::{cell::RefCell, error::Error, io::Write, sync::Arc};
+use std::{cell::RefCell, error::Error, io::Write, sync::Arc, vec};
 
-use crate::moco::client::MocoClient;
+use crate::{moco::client::MocoClient, utils::render_table};
 use chrono::Utc;
 use jira_tempo::client::JiraTempoClient;
 
@@ -13,12 +13,7 @@ mod jira_tempo;
 mod moco;
 mod tempo;
 
-fn read_line() -> Result<String, Box<dyn Error>> {
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input)?;
-    input.remove(input.len() - 1);
-    Ok(input)
-}
+mod utils;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -40,7 +35,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 print!("Enter your personal api key: ");
                 std::io::stdout().flush()?;
 
-                let api_key = read_line()?;
+                let api_key = utils::read_line()?;
                 config.borrow_mut().jira_tempo_api_key = Some(api_key);
 
                 tempo_client.test_login().await?;
@@ -53,16 +48,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 print!("Enter your personal api key: ");
                 std::io::stdout().flush()?;
 
-                let api_key = read_line()?;
+                let api_key = utils::read_line()?;
                 config.borrow_mut().moco_api_key = Some(api_key);
 
                 print!("Enter firstname: ");
                 std::io::stdout().flush()?;
-                let firstname = read_line()?;
+                let firstname = utils::read_line()?;
 
                 print!("Enter lastname:  ");
                 std::io::stdout().flush()?;
-                let lastname = read_line()?;
+                let lastname = utils::read_line()?;
 
                 let client_id = moco_client.get_user_id(firstname, lastname).await?;
 
@@ -88,7 +83,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
             for activitie in activities.iter() {
                 println!(
                     "{} {}h {} ",
-                    activitie.date, activitie.hours, activitie.description
+                    activitie.date,
+                    activitie.hours,
+                    activitie.description.as_ref().unwrap_or(&String::new())
                 )
             }
         }
@@ -96,10 +93,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
             let (project, task) = promp_task_select(&moco_client).await?;
 
             println!("Date (YYYY-mm-DD)");
-            let date = read_line()?;
+            let date = utils::read_line()?;
 
             println!("Time in Hours");
-            let hours = read_line()?;
+            let hours = utils::read_line()?;
 
             moco_client
                 .create_activitie(&CreateActivitie {
@@ -164,7 +161,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     .iter()
                     .filter(|worklog| {
                         !activities.iter().any(|activity| {
-                            activity.remote_id.parse::<i64>().unwrap_or(0)
+                            activity
+                                .remote_id
+                                .as_ref()
+                                .and_then(|x| x.parse::<i64>().ok())
+                                .unwrap_or(0)
                                 == worklog.jira_worklog_id
                         })
                     })
@@ -205,51 +206,27 @@ async fn promp_task_select(
     moco_client: &MocoClient,
 ) -> Result<(moco::model::Project, moco::model::ProjectTask), Box<dyn Error>> {
     let projects = moco_client.get_assigned_projects().await?;
-    let project_index = render_list(
+
+    let project_index = utils::render_list_select(
         &projects,
-        "Index-Customer-Project-Project ID",
+        vec!["Index", "Customer", "Project", "Project ID"],
         "Chose your Project:",
         &(|(index, project)| {
-            println!(
-                "{}-{}-{}-{}",
-                index, project.customer.name, project.name, project.id
-            )
+            vec![
+                index.to_string(),
+                project.customer.name.clone(),
+                project.name.clone(),
+                project.id.to_string(),
+            ]
         }),
     )?;
     let project = &projects[project_index];
-    let task_index = render_list(
+    let task_index = utils::render_list_select(
         &project.tasks,
-        "Index-Task-Task ID",
+        vec!["Index", "Task", "Task ID"],
         "Chose your Task:",
-        &(|(index, task)| {
-            println!("{}-{}-{}", index, task.name, task.id);
-        }),
+        &(|(index, task)| vec![index.to_string(), task.name.clone(), task.id.to_string()]),
     )?;
     let task = &project.tasks[task_index];
     Ok((project.clone(), task.clone()))
-}
-
-fn render_list<T>(
-    list: &[T],
-    headline: &str,
-    promt: &str,
-    linenderer: &dyn Fn((usize, &T)),
-) -> Result<usize, Box<dyn Error>> {
-    loop {
-        println!("{}", headline);
-        for elem in list.iter().enumerate() {
-            linenderer(elem);
-        }
-        print!("{}", promt);
-        std::io::stdout().flush()?;
-
-        let index_input = read_line().map(|x| x.parse::<usize>().ok()).ok().flatten();
-
-        if let Some(index) = index_input {
-            if index < list.len() {
-                return Ok(index);
-            }
-        }
-        println!("Index Invallid")
-    }
 }

@@ -44,14 +44,14 @@ pub struct Activitie {
     pub date: String,
     pub hours: f64,
     pub seconds: i64,
-    pub description: String,
+    pub description: Option<String>,
     pub billed: bool,
     pub billable: bool,
     pub tag: String,
     #[serde(rename = "remote_service")]
-    pub remote_service: String,
+    pub remote_service: Option<String>,
     #[serde(rename = "remote_id")]
-    pub remote_id: String,
+    pub remote_id: Option<String>,
     #[serde(rename = "remote_url")]
     pub remote_url: Value,
     pub project: ActivitieProject,
