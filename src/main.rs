@@ -1,7 +1,8 @@
 use std::{cell::RefCell, error::Error, io::Write, sync::Arc, vec};
 
-use crate::moco::client::MocoClient;
+use crate::{moco::client::MocoClient, utils::ask_question};
 
+use chrono::Utc;
 use jira_tempo::client::JiraTempoClient;
 use utils::render_table;
 
@@ -108,13 +109,23 @@ async fn main() -> Result<(), Box<dyn Error>> {
             render_table(list);
         }
         cli::Commands::New => {
+            let now = Utc::now().format("%Y-%m-%d").to_string();
+
             let (project, task) = promp_task_select(&moco_client).await?;
 
-            println!("Date (YYYY-mm-DD)");
-            let date = utils::read_line()?;
+            print!("Date (YYYY-mm-DD) default ({}): ", now);
+            std::io::stdout().flush()?;
 
-            println!("Time in Hours");
-            let hours = utils::read_line()?;
+            let mut date = utils::read_line()?;
+            if date.is_empty() {
+                date = now;
+            }
+
+            let hours = ask_question("Time in Hours: ", &|answer| {
+                answer.parse::<i64>().err().map(|e| format!("{}", e))
+            })?;
+
+            let description = ask_question("Description: ", &|_| None)?;
 
             moco_client
                 .create_activitie(&CreateActivitie {
@@ -122,6 +133,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     project_id: project.id,
                     task_id: task.id,
                     hours: Some(hours.parse::<f64>()?),
+                    description,
                     ..Default::default()
                 })
                 .await?;
@@ -258,7 +270,7 @@ async fn promp_task_select(
     let project_index = utils::render_list_select(
         &projects,
         vec!["Index", "Customer", "Project", "Project ID"],
-        "Chose your Project:",
+        "Chose your Project: ",
         &(|(index, project)| {
             vec![
                 index.to_string(),
@@ -272,7 +284,7 @@ async fn promp_task_select(
     let task_index = utils::render_list_select(
         &project.tasks,
         vec!["Index", "Task", "Task ID"],
-        "Chose your Task:",
+        "Chose your Task: ",
         &(|(index, task)| vec![index.to_string(), task.name.clone(), task.id.to_string()]),
     )?;
     let task = &project.tasks[task_index];

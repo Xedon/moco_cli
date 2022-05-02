@@ -92,3 +92,19 @@ pub fn select_from_to_date(
     let to = to.unwrap_or(now);
     (from, to)
 }
+
+pub fn ask_question(
+    question: &str,
+    validator: &dyn Fn(&str) -> Option<String>,
+) -> Result<String, Box<dyn Error>> {
+    loop {
+        print!("{}", question);
+        std::io::stdout().flush()?;
+        let line = read_line()?;
+        if let Some(error) = validator(&line) {
+            println!("{}", error);
+            continue;
+        }
+        return Ok(line);
+    }
+}
