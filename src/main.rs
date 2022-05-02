@@ -134,6 +134,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             today,
             week,
             month,
+            dry_run,
         } => match system {
             cli::Sync::Jira => {
                 let (from, to) = utils::select_from_to_date(today, week, month);
@@ -188,12 +189,59 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     })
                     .collect();
 
-                for worklog in worklogs {
+                let output_list = vec!["Date", "Hours", "Description", "Project ID", "Task ID"];
+
+                let mut output_list = vec![output_list.iter().map(|str| str.to_string()).collect()];
+
+                for worklog in &worklogs {
                     if let Ok(worklog) = &worklog {
-                        moco_client.create_activitie(worklog).await?;
+                        output_list.push(vec![
+                            worklog.date.clone(),
+                            worklog
+                                .seconds
+                                .map(|x| x as f64 / 60.0 / 60.0)
+                                .unwrap_or(0.0)
+                                .to_string(),
+                            worklog.description.clone(),
+                            worklog.project_id.to_string(),
+                            worklog.task_id.to_string(),
+                        ])
+                    }
+                    if let Err(err) = &worklog {
+                        output_list.push(vec![
+                            "Error".to_string(),
+                            format!("{:?}", err),
+                            "".to_string(),
+                            "".to_string(),
+                            "".to_string(),
+                        ])
+                    }
+                }
+
+                if dry_run {
+                    print!("Planed sync: ");
+                    if output_list.len() == 1 {
+                        print!("Nothing, everything seems to be Synced!")
+                    } else {
+                        render_table(output_list);
+                    }
+                    println!();
+                } else {
+                    print!("Sync plan: ");
+                    if output_list.len() == 1 {
+                        print!("Nothing, everything seems to be Synced!")
+                    } else {
+                        render_table(output_list);
                     }
 
-                    println!("{:#?}", &worklog)
+                    println!();
+
+                    for worklog in worklogs {
+                        if let Ok(worklog) = &worklog {
+                            moco_client.create_activitie(worklog).await?;
+                        }
+                    }
+                    println!("Synced!");
                 }
             }
         },

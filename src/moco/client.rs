@@ -97,8 +97,6 @@ impl MocoClient {
                     .header("Authorization", format!("Token token={}", api_key))
                     .json(payload)
                     .send()
-                    .await?
-                    .json::<Vec<Activitie>>()
                     .await?;
                 Ok(())
             }

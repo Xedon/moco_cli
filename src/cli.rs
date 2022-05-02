@@ -47,6 +47,9 @@ pub enum Commands {
 
         #[clap(short, long)]
         month: bool,
+
+        #[clap(short, long)]
+        dry_run: bool,
     },
 }
 
