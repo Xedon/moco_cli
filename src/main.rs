@@ -138,9 +138,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 })
                 .await?;
         }
-        cli::Commands::Add => todo!(),
-        cli::Commands::Edit => todo!(),
-        cli::Commands::Rm => todo!(),
+        cli::Commands::Add => println!("not yet implemented"),
+        cli::Commands::Edit => println!("not yet implemented"),
+        cli::Commands::Rm => println!("not yet implemented"),
         cli::Commands::Sync {
             system,
             today,
