@@ -30,11 +30,14 @@ impl MocoClient {
         firstname: String,
         lastname: String,
     ) -> Result<Option<i64>, Box<dyn Error>> {
-        match &self.config.borrow().moco_api_key {
-            Some(api_key) => {
+        let config = &self.config.borrow();
+        match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
+            (Some(api_key), Some(company)) => {
                 let employments = self
                     .client
-                    .get("https://mayflower.mocoapp.com/api/v1/users/employments")
+                    .get(format!(
+                        "https://{company}.mocoapp.com/api/v1/users/employments"
+                    ))
                     .header("Authorization", format!("Token token={}", api_key))
                     .send()
                     .await?
@@ -48,7 +51,7 @@ impl MocoClient {
                     })
                     .map(|employment| employment.user.id))
             }
-            None => Err(Box::new(MocoClientError::NotLoggedIn)),
+            (_, _) => Err(Box::new(MocoClientError::NotLoggedIn)),
         }
     }
 
@@ -75,46 +78,51 @@ impl MocoClient {
             parameter.push(("term", x))
         }
 
-        match &self.config.borrow().moco_api_key {
-            Some(api_key) => Ok(self
+        let config = &self.config.borrow();
+        match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
+            (Some(api_key), Some(company)) => Ok(self
                 .client
-                .get("https://mayflower.mocoapp.com/api/v1/activities")
+                .get(format!("https://{company}.mocoapp.com/api/v1/activities"))
                 .query(&parameter)
                 .header("Authorization", format!("Token token={}", api_key))
                 .send()
                 .await?
                 .json::<Vec<Activitie>>()
                 .await?),
-            None => Err(Box::new(MocoClientError::NotLoggedIn)),
+            (_, _) => Err(Box::new(MocoClientError::NotLoggedIn)),
         }
     }
 
     pub async fn create_activitie(&self, payload: &CreateActivitie) -> Result<(), Box<dyn Error>> {
-        match &self.config.borrow().moco_api_key {
-            Some(api_key) => {
+        let config = &self.config.borrow();
+        match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
+            (Some(api_key), Some(company)) => {
                 self.client
-                    .post("https://mayflower.mocoapp.com/api/v1/activities")
+                    .post(format!("https://{company}.mocoapp.com/api/v1/activities"))
                     .header("Authorization", format!("Token token={}", api_key))
                     .json(payload)
                     .send()
                     .await?;
                 Ok(())
             }
-            None => Err(Box::new(MocoClientError::NotLoggedIn)),
+            (_, _) => Err(Box::new(MocoClientError::NotLoggedIn)),
         }
     }
 
     pub async fn get_assigned_projects(&self) -> Result<Projects, Box<dyn Error>> {
-        match &self.config.borrow().moco_api_key {
-            Some(api_key) => Ok(self
+        let config = &self.config.borrow();
+        match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
+            (Some(api_key), Some(company)) => Ok(self
                 .client
-                .get("https://mayflower.mocoapp.com/api/v1/projects/assigned")
+                .get(format!(
+                    "https://{company}.mocoapp.com/api/v1/projects/assigned"
+                ))
                 .header("Authorization", format!("Token token={}", api_key))
                 .send()
                 .await?
                 .json::<Projects>()
                 .await?),
-            None => Err(Box::new(MocoClientError::NotLoggedIn)),
+            (_, _) => Err(Box::new(MocoClientError::NotLoggedIn)),
         }
     }
 }

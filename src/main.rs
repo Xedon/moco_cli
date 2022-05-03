@@ -46,6 +46,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
             cli::Login::Moco => {
                 println!("Moco Login");
+
+                print!("Enter moco company name: ");
+                std::io::stdout().flush()?;
+                let moco_company = utils::read_line()?;
+                config.borrow_mut().moco_company = Some(moco_company);
+
                 print!("Enter your personal api key: ");
                 std::io::stdout().flush()?;
 
@@ -122,7 +128,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
 
             let hours = ask_question("Time in Hours: ", &|answer| {
-                answer.parse::<i64>().err().map(|e| format!("{}", e))
+                answer.parse::<f64>().err().map(|e| format!("{}", e))
             })?;
 
             let description = ask_question("Description: ", &|_| None)?;

@@ -7,6 +7,7 @@ use std::{
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct AppConfig {
+    pub moco_company: Option<String>,
     pub moco_api_key: Option<String>,
     pub moco_user_id: Option<i64>,
     pub jira_tempo_api_key: Option<String>,
