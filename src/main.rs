@@ -7,6 +7,7 @@ use crate::{
 
 use chrono::Utc;
 use jira_tempo::client::JiraTempoClient;
+use serde::__private::de;
 use utils::render_table;
 
 use crate::moco::model::CreateActivitie;
@@ -116,31 +117,52 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
             render_table(list);
         }
-        cli::Commands::New { project, task } => {
+        cli::Commands::New {
+            project,
+            task,
+            hours,
+            date,
+            description,
+        } => {
             let now = Utc::now().format("%Y-%m-%d").to_string();
 
             let (project, task) = promp_task_select(&moco_client, project, task).await?;
 
-            print!("Date (YYYY-mm-DD) default ({}): ", now);
-            std::io::stdout().flush()?;
+            let date = if let Some(d) = date {
+                d
+            } else {
+                print!("Date (YYYY-mm-DD) default ({}): ", now);
+                std::io::stdout().flush()?;
 
-            let mut date = utils::read_line()?;
-            if date.is_empty() {
-                date = now;
-            }
+                let date = utils::read_line()?;
+                if date.is_empty() {
+                    now
+                } else {
+                    date
+                }
+            };
 
-            let hours = ask_question("Time in Hours: ", &|answer| {
-                answer.parse::<f64>().err().map(|e| format!("{}", e))
-            })?;
+            let hours = if let Some(h) = hours {
+                h
+            } else {
+                ask_question("Time in Hours: ", &|answer| {
+                    answer.parse::<f64>().err().map(|e| format!("{}", e))
+                })?
+                .parse::<f64>()?
+            };
 
-            let description = ask_question("Description: ", &optional_validator)?;
+            let description = if let Some(d) = description {
+                d
+            } else {
+                ask_question("Description: ", &optional_validator)?
+            };
 
             moco_client
                 .create_activitie(&CreateActivitie {
                     date,
                     project_id: project.id,
                     task_id: task.id,
-                    hours: Some(hours.parse::<f64>()?),
+                    hours: Some(hours),
                     description,
                     ..Default::default()
                 })

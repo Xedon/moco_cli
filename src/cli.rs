@@ -37,6 +37,15 @@ pub enum Commands {
 
         #[clap(long)]
         task: Option<i64>,
+
+        #[clap(long)]
+        hours: Option<f64>,
+
+        #[clap(long)]
+        date: Option<String>,
+
+        #[clap(long)]
+        description: Option<String>,
     }, // create moco entry
     Add,  // add moco time exiting entry
     Edit, // edit moco time/description of exising entry
