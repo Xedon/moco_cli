@@ -11,7 +11,7 @@ pub struct Cli {
     #[clap(subcommand)]
     pub command: Commands,
 
-    #[clap(short, long)]
+    #[clap(long)]
     pub debug: bool,
 }
 
@@ -22,16 +22,22 @@ pub enum Commands {
         system: Login,
     }, // login
     List {
-        #[clap(short, long)]
+        #[clap(long)]
         today: bool,
 
-        #[clap(short, long)]
+        #[clap(long)]
         week: bool,
 
-        #[clap(short, long)]
+        #[clap(long)]
         month: bool,
     }, // list existing moco entrys
-    New,  // create moco entry
+    New {
+        #[clap(long)]
+        project: Option<i64>,
+
+        #[clap(long)]
+        task: Option<i64>,
+    }, // create moco entry
     Add,  // add moco time exiting entry
     Edit, // edit moco time/description of exising entry
     Rm,   // delete moco entry
@@ -39,16 +45,22 @@ pub enum Commands {
         #[clap(arg_enum,default_value_t = Sync::Jira)]
         system: Sync,
 
-        #[clap(short, long)]
+        #[clap(long)]
         today: bool,
 
-        #[clap(short, long)]
+        #[clap(long)]
         week: bool,
 
-        #[clap(short, long)]
+        #[clap(long)]
         month: bool,
 
-        #[clap(short, long)]
+        #[clap(long)]
+        project: Option<i64>,
+
+        #[clap(long)]
+        task: Option<i64>,
+
+        #[clap(long)]
         dry_run: bool,
     },
 }

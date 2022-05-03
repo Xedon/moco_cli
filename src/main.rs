@@ -1,6 +1,9 @@
 use std::{cell::RefCell, error::Error, io::Write, sync::Arc, vec};
 
-use crate::{moco::client::MocoClient, utils::ask_question};
+use crate::{
+    moco::client::MocoClient,
+    utils::{ask_question, mandatory_validator, optional_validator},
+};
 
 use chrono::Utc;
 use jira_tempo::client::JiraTempoClient;
@@ -33,10 +36,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         cli::Commands::Login { system } => match system {
             cli::Login::Jira => {
                 println!("Jira Tempo Login");
-                print!("Enter your personal api key: ");
-                std::io::stdout().flush()?;
 
-                let api_key = utils::read_line()?;
+                let api_key = ask_question("Enter your personal api key: ", &mandatory_validator)?;
                 config.borrow_mut().jira_tempo_api_key = Some(api_key);
 
                 tempo_client.test_login().await?;
@@ -47,24 +48,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
             cli::Login::Moco => {
                 println!("Moco Login");
 
-                print!("Enter moco company name: ");
-                std::io::stdout().flush()?;
-                let moco_company = utils::read_line()?;
+                let moco_company = ask_question("Enter moco company name: ", &mandatory_validator)?;
+                let api_key = ask_question("Enter your personal api key: ", &mandatory_validator)?;
+
                 config.borrow_mut().moco_company = Some(moco_company);
-
-                print!("Enter your personal api key: ");
-                std::io::stdout().flush()?;
-
-                let api_key = utils::read_line()?;
                 config.borrow_mut().moco_api_key = Some(api_key);
 
-                print!("Enter firstname: ");
-                std::io::stdout().flush()?;
-                let firstname = utils::read_line()?;
-
-                print!("Enter lastname:  ");
-                std::io::stdout().flush()?;
-                let lastname = utils::read_line()?;
+                let firstname = ask_question("Enter firstname: ", &mandatory_validator)?;
+                let lastname = ask_question("Enter lastname:  ", &mandatory_validator)?;
 
                 let client_id = moco_client.get_user_id(firstname, lastname).await?;
 
@@ -114,10 +105,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
             render_table(list);
         }
-        cli::Commands::New => {
+        cli::Commands::New { project, task } => {
             let now = Utc::now().format("%Y-%m-%d").to_string();
 
-            let (project, task) = promp_task_select(&moco_client).await?;
+            let (project, task) = promp_task_select(&moco_client, project, task).await?;
 
             print!("Date (YYYY-mm-DD) default ({}): ", now);
             std::io::stdout().flush()?;
@@ -131,7 +122,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 answer.parse::<f64>().err().map(|e| format!("{}", e))
             })?;
 
-            let description = ask_question("Description: ", &|_| None)?;
+            let description = ask_question("Description: ", &optional_validator)?;
 
             moco_client
                 .create_activitie(&CreateActivitie {
@@ -153,6 +144,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             week,
             month,
             dry_run,
+            project,
+            task,
         } => match system {
             cli::Sync::Jira => {
                 let (from, to) = utils::select_from_to_date(today, week, month);
@@ -164,7 +157,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     )
                     .await?;
 
-                let (project, task) = promp_task_select(&moco_client).await?;
+                let (project, task) = promp_task_select(&moco_client, project, task).await?;
 
                 let activities = moco_client
                     .get_activities(
@@ -270,29 +263,45 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 async fn promp_task_select(
     moco_client: &MocoClient,
+    project: Option<i64>,
+    task: Option<i64>,
 ) -> Result<(moco::model::Project, moco::model::ProjectTask), Box<dyn Error>> {
     let projects = moco_client.get_assigned_projects().await?;
+    let project = projects.iter().find(|p| p.id == project.unwrap_or(-1));
 
-    let project_index = utils::render_list_select(
-        &projects,
-        vec!["Index", "Customer", "Project", "Project ID"],
-        "Chose your Project: ",
-        &(|(index, project)| {
-            vec![
-                index.to_string(),
-                project.customer.name.clone(),
-                project.name.clone(),
-                project.id.to_string(),
-            ]
-        }),
-    )?;
-    let project = &projects[project_index];
-    let task_index = utils::render_list_select(
-        &project.tasks,
-        vec!["Index", "Task", "Task ID"],
-        "Chose your Task: ",
-        &(|(index, task)| vec![index.to_string(), task.name.clone(), task.id.to_string()]),
-    )?;
-    let task = &project.tasks[task_index];
+    let project = if let Some(p) = project {
+        p
+    } else {
+        let project_index = utils::render_list_select(
+            &projects,
+            vec!["Index", "Customer", "Project", "Project ID"],
+            "Chose your Project: ",
+            &(|(index, project)| {
+                vec![
+                    index.to_string(),
+                    project.customer.name.clone(),
+                    project.name.clone(),
+                    project.id.to_string(),
+                ]
+            }),
+        )?;
+
+        &projects[project_index]
+    };
+
+    let task = project.tasks.iter().find(|t| t.id == task.unwrap_or(-1));
+
+    let task = if let Some(t) = task {
+        t
+    } else {
+        let task_index = utils::render_list_select(
+            &project.tasks,
+            vec!["Index", "Task", "Task ID"],
+            "Chose your Task: ",
+            &(|(index, task)| vec![index.to_string(), task.name.clone(), task.id.to_string()]),
+        )?;
+        &project.tasks[task_index]
+    };
+
     Ok((project.clone(), task.clone()))
 }
