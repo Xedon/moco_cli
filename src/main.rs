@@ -103,6 +103,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 ],
             );
 
+            list.push(vec![
+                "-".to_string(),
+                "-".to_string(),
+                "-".to_string(),
+                activities
+                    .iter()
+                    .fold(0.0, |hours, activity| activity.hours + hours)
+                    .to_string(),
+                "".to_string(),
+            ]);
+
             render_table(list);
         }
         cli::Commands::New { project, task } => {
@@ -208,11 +219,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     if let Ok(worklog) = &worklog {
                         output_list.push(vec![
                             worklog.date.clone(),
-                            worklog
-                                .seconds
-                                .map(|x| x as f64 / 60.0 / 60.0)
-                                .unwrap_or(0.0)
-                                .to_string(),
+                            worklog.hours.unwrap_or(0.0).to_string(),
                             worklog.description.clone(),
                             worklog.project_id.to_string(),
                             worklog.task_id.to_string(),
