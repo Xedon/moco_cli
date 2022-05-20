@@ -7,7 +7,7 @@ use crate::{
 
 use chrono::Utc;
 use jira_tempo::client::JiraTempoClient;
-use serde::__private::de;
+use log::trace;
 use utils::render_table;
 
 use crate::moco::model::CreateActivitie;
@@ -190,6 +190,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     )
                     .await?;
 
+                trace!("Tempo: {:#?}", worklogs);
+
                 let (project, task) = promp_task_select(&moco_client, project, task).await?;
 
                 let activities = moco_client
@@ -218,11 +220,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         Ok(CreateActivitie {
                             remote_service: Some("jira".to_string()),
                             seconds: Some(worklog.time_spent_seconds),
-                            date: chrono::DateTime::parse_from_rfc3339(
-                                &worklog.created_at.to_string(),
-                            )?
-                            .format("%Y-%m-%d")
-                            .to_string(),
+                            date: worklog.start_date.to_string(),
                             tag: Some("mococli".to_string()),
                             project_id: project.id,
                             task_id: task.id,
@@ -241,7 +239,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     if let Ok(worklog) = &worklog {
                         output_list.push(vec![
                             worklog.date.clone(),
-                            worklog.hours.unwrap_or(0.0).to_string(),
+                            worklog
+                                .seconds
+                                .map(|seconds| seconds as f64 / 60.0 / 60.0)
+                                .unwrap_or(0.0)
+                                .to_string(),
                             worklog.description.clone(),
                             worklog.project_id.to_string(),
                             worklog.task_id.to_string(),
@@ -259,7 +261,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 }
 
                 if dry_run {
-                    print!("Planed sync: ");
+                    println!("Planed sync: ");
                     if output_list.len() == 1 {
                         print!("Nothing, everything seems to be Synced!")
                     } else {
@@ -267,7 +269,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     }
                     println!();
                 } else {
-                    print!("Sync plan: ");
+                    println!("Sync plan: ");
                     if output_list.len() == 1 {
                         print!("Nothing, everything seems to be Synced!")
                     } else {
