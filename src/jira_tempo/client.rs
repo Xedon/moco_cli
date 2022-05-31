@@ -42,7 +42,7 @@ impl JiraTempoClient {
     }
 
     pub async fn get_worklogs(&self, from: String, to: String) -> Result<Response, Box<dyn Error>> {
-        let parameter = vec![("from", from), ("to", to)];
+        let parameter = vec![("from", from), ("to", to), ("limit", "1000".to_string())];
 
         match &self.config.borrow().jira_tempo_api_key {
             Some(token) => Ok(self

@@ -262,6 +262,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                 if dry_run {
                     println!("Planed sync: ");
+                    println!(
+                        "From {} to {}",
+                        from.format("%d.%m.%y"),
+                        to.format("%d.%m.%y")
+                    );
                     if output_list.len() == 1 {
                         print!("Nothing, everything seems to be Synced!")
                     } else {
@@ -270,6 +275,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     println!();
                 } else {
                     println!("Sync plan: ");
+                    println!(
+                        "From {} to {}",
+                        from.format("%d.%m.%y"),
+                        to.format("%d.%m.%y")
+                    );
                     if output_list.len() == 1 {
                         print!("Nothing, everything seems to be Synced!")
                     } else {
