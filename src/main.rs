@@ -10,7 +10,7 @@ use jira_tempo::client::JiraTempoClient;
 use log::trace;
 use utils::render_table;
 
-use crate::moco::model::CreateActivitie;
+use crate::moco::model::{CreateActivitie, GetActivitie, ControlActivitieTimer};
 
 mod cli;
 mod config;
@@ -171,6 +171,53 @@ async fn main() -> Result<(), Box<dyn Error>> {
         cli::Commands::Add => println!("not yet implemented"),
         cli::Commands::Edit => println!("not yet implemented"),
         cli::Commands::Rm => println!("not yet implemented"),
+        cli::Commands::Timer { system, activity } => match system {
+            cli::Timer::Start => {
+                let activity = promp_activitie_select(&moco_client, activity).await?;
+
+                moco_client
+                    .control_activitie_timer(&ControlActivitieTimer {
+                        control: "start".to_string(),
+                        activity_id: activity.id,
+                        ..Default::default()
+                    })
+                    .await?;
+            }
+            cli::Timer::Stop => {
+                let now = Utc::now().format("%Y-%m-%d").to_string();
+                let from = now.clone();
+                let to = now.clone();
+
+                let activities = moco_client.get_activities(from, to, None, None).await?;
+                let activity = activities.iter().find(|a| !a.timer_started_at.is_null());
+
+                if let Some(a) = activity {
+                    moco_client
+                        .control_activitie_timer(&ControlActivitieTimer {
+                            control: "stop".to_string(),
+                            activity_id: a.id,
+                            ..Default::default()
+                        })
+                        .await?;
+
+                    let a = moco_client
+                        .get_activitie(&GetActivitie {
+                            activity_id: a.id,
+                            ..Default::default()
+                        })
+                        .await?;
+                        println!(
+                            "Activity Duration: {} hours\n   Project: {}\n   Task: {}\n   Description: {}",
+                            a.hours,
+                            a.project.name,
+                            a.task.name,
+                            a.description.as_ref().unwrap_or(&String::new()).to_string()
+                        );
+                } else {
+                    println!("Could not stop timer since it was not on");
+                }
+            }
+        }
         cli::Commands::Sync {
             system,
             today,

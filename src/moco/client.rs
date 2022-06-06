@@ -6,6 +6,7 @@ use crate::moco::model::{
     Activitie,
     GetActivitie,
     CreateActivitie,
+    ControlActivitieTimer,
     Employment,
     Projects
 };
@@ -114,6 +115,7 @@ impl MocoClient {
         }
     }
 
+
     pub async fn create_activitie(
         &self,
         payload: &CreateActivitie
@@ -132,6 +134,29 @@ impl MocoClient {
             (_, _) => Err(Box::new(MocoClientError::NotLoggedIn)),
         }
     }
+
+    pub async fn control_activitie_timer(
+        &self,
+        payload: &ControlActivitieTimer
+    ) -> Result<(), Box<dyn Error>> {
+        let config = &self.config.borrow();
+        match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
+            (Some(api_key), Some(company)) => {
+                self.client
+                    .patch(format!(
+                        "https://{company}.mocoapp.com/api/v1/activities/{}/{}_timer",
+                        payload.activity_id,
+                        payload.control
+                    ))
+                    .header("Authorization", format!("Token token={}", api_key))
+                    .send()
+                    .await?;
+                Ok(())
+            }
+            (_, _) => Err(Box::new(MocoClientError::NotLoggedIn)),
+        }
+    }
+
 
     pub async fn get_assigned_projects(&self) -> Result<Projects, Box<dyn Error>> {
         let config = &self.config.borrow();
