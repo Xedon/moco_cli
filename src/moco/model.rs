@@ -111,6 +111,13 @@ pub struct CreateActivitie {
     pub remote_url: Option<String>,
 }
 
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteActivitie {
+    #[serde(rename = "activity_id")]
+    pub activity_id: i64,
+}
+
 //Project
 
 pub type Projects = Vec<Project>;
