@@ -48,7 +48,11 @@ pub enum Commands {
         description: Option<String>,
     }, // create moco entry
     Add,  // add moco time exiting entry
-    Edit, // edit moco time/description of exising entry
+    #[clap(about = "Edit activity project/task/description/duration", long_about = None)]
+    Edit {
+        #[clap(long)]
+        activity: Option<i64>,
+    },
     Rm,   // delete moco entry
     Sync {
         #[clap(arg_enum,default_value_t = Sync::Jira)]

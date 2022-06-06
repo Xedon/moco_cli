@@ -10,7 +10,7 @@ use jira_tempo::client::JiraTempoClient;
 use log::trace;
 use utils::render_table;
 
-use crate::moco::model::CreateActivitie;
+use crate::moco::model::{CreateActivitie, EditActivitie};
 
 mod cli;
 mod config;
@@ -169,7 +169,65 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .await?;
         }
         cli::Commands::Add => println!("not yet implemented"),
-        cli::Commands::Edit => println!("not yet implemented"),
+        cli::Commands::Edit { activity } => {
+            let activity = promp_activitie_select(&moco_client, activity).await?;
+
+            // print!("Do you want to change the activity's project/task - Options 'Yes/No': ");
+            // std::io::stdout().flush()?;
+            // let render = utils::read_line()?;
+
+            // let mut project = activity.project;
+            // let mut task = activity.task;
+            // if render.to_lowercase() == "yes" {
+            //     let (project, task) = promp_task_select(&moco_client, None, None).await?;
+            // } else {
+
+            // };
+
+            let now = Utc::now().format("%Y-%m-%d").to_string();
+
+            print!("New date (YYYY-MM-DD) - Default '{}': ", activity.date);
+            std::io::stdout().flush()?;
+
+            let date = utils::read_line()?;
+            if date.is_empty() {
+                now.clone()
+            } else {
+                date.clone()
+            };
+
+            print!("New duration in hours - Default '{}': ", activity.hours.to_string());
+            std::io::stdout().flush()?;
+
+            let hours = utils::read_line()?;
+            if hours.is_empty() {
+                activity.hours.to_string()
+            } else {
+                hours.clone()
+            };
+
+            print!("New description - Default 'current': ");
+            std::io::stdout().flush()?;
+
+            let description = utils::read_line()?;
+            if description.is_empty() {
+                activity.description.as_ref().unwrap_or(&String::new()).to_string()
+            } else {
+                description.clone()
+            };
+
+            moco_client
+                .edit_activitie(&EditActivitie {
+                    activity_id: activity.id,
+                    project_id: activity.project.id,
+                    task_id: activity.task.id,
+                    date,
+                    description,
+                    hours,
+                    ..Default::default()
+                })
+                .await?;
+        }
         cli::Commands::Rm => println!("not yet implemented"),
         cli::Commands::Sync {
             system,
