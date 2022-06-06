@@ -93,6 +93,13 @@ pub struct Customer {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct GetActivitie {
+    #[serde(rename = "activity_id")]
+    pub activity_id: i64,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateActivitie {
     pub date: String,
     pub description: String,

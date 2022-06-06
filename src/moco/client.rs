@@ -2,7 +2,13 @@ use std::{cell::RefCell, error::Error, sync::Arc};
 
 use reqwest::Client;
 
-use crate::moco::model::{Activitie, CreateActivitie, Employment, Projects};
+use crate::moco::model::{
+    Activitie,
+    GetActivitie,
+    CreateActivitie,
+    Employment,
+    Projects
+};
 
 use crate::config::AppConfig;
 
@@ -93,7 +99,25 @@ impl MocoClient {
         }
     }
 
-    pub async fn create_activitie(&self, payload: &CreateActivitie) -> Result<(), Box<dyn Error>> {
+    pub async fn get_activitie(&self, payload: &GetActivitie) -> Result<Activitie, Box<dyn Error>> {
+        let config = &self.config.borrow();
+        match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
+            (Some(api_key), Some(company)) => Ok(self
+                .client
+                .get(format!("https://{company}.mocoapp.com/api/v1/activities/{}", payload.activity_id))
+                .header("Authorization", format!("Token token={}", api_key))
+                .send()
+                .await?
+                .json::<Activitie>()
+                .await?),
+            (_, _) => Err(Box::new(MocoClientError::NotLoggedIn)),
+        }
+    }
+
+    pub async fn create_activitie(
+        &self,
+        payload: &CreateActivitie
+    ) -> Result<(), Box<dyn Error>> {
         let config = &self.config.borrow();
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => {
