@@ -6,6 +6,7 @@ use crate::moco::model::{
     Activitie,
     GetActivitie,
     CreateActivitie,
+    EditActivitie,
     ControlActivitieTimer,
     Employment,
     Projects
@@ -125,6 +126,22 @@ impl MocoClient {
             (Some(api_key), Some(company)) => {
                 self.client
                     .post(format!("https://{company}.mocoapp.com/api/v1/activities"))
+                    .header("Authorization", format!("Token token={}", api_key))
+                    .json(payload)
+                    .send()
+                    .await?;
+                Ok(())
+            }
+            (_, _) => Err(Box::new(MocoClientError::NotLoggedIn)),
+        }
+    }
+
+    pub async fn edit_activitie(&self, payload: &EditActivitie) -> Result<(), Box<dyn Error>> {
+        let config = &self.config.borrow();
+        match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
+            (Some(api_key), Some(company)) => {
+                self.client
+                    .put(format!("https://{company}.mocoapp.com/api/v1/activities/{}", payload.activity_id))
                     .header("Authorization", format!("Token token={}", api_key))
                     .json(payload)
                     .send()
