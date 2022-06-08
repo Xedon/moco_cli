@@ -120,6 +120,20 @@ pub struct CreateActivitie {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct EditActivitie {
+    #[serde(rename = "activity_id")]
+    pub activity_id: i64,
+    #[serde(rename = "project_id")]
+    pub project_id: i64,
+    #[serde(rename = "task_id")]
+    pub task_id: i64,
+    pub date: String,
+    pub description: String,
+    pub hours: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ControlActivitieTimer {
     pub control: String,
     #[serde(rename = "activity_id")]

@@ -174,7 +174,47 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .await?;
         }
         cli::Commands::Add => println!("not yet implemented"),
-        cli::Commands::Edit => println!("not yet implemented"),
+        cli::Commands::Edit { activity } => {
+            let activity = promp_activitie_select(&moco_client, activity).await?;
+
+            let now = Utc::now().format("%Y-%m-%d").to_string();
+
+            print!("New date (YYYY-MM-DD) - Default '{}': ", activity.date);
+            std::io::stdout().flush()?;
+
+            let mut date = utils::read_line()?;
+            if date.is_empty() {
+                date = now.clone()
+            }
+
+            print!("New duration in hours - Default '{}': ", activity.hours.to_string());
+            std::io::stdout().flush()?;
+
+            let mut hours = utils::read_line()?;
+            if hours.is_empty() {
+                hours = activity.hours.to_string()
+            }
+
+            print!("New description - Default 'current': ");
+            std::io::stdout().flush()?;
+
+            let mut description = utils::read_line()?;
+            if description.is_empty() {
+                description = activity.description.as_ref().unwrap_or(&String::new()).to_string()
+            }
+
+            moco_client
+                .edit_activitie(&EditActivitie {
+                    activity_id: activity.id,
+                    project_id: activity.project.id,
+                    task_id: activity.task.id,
+                    date,
+                    description,
+                    hours,
+                    ..Default::default()
+                })
+                .await?;
+        }
         cli::Commands::Rm { activity } => {
             let activity = promp_activitie_select(&moco_client, activity).await?;
 
@@ -220,13 +260,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             ..Default::default()
                         })
                         .await?;
-                        println!(
-                            "Activity Duration: {} hours\n   Project: {}\n   Task: {}\n   Description: {}",
-                            a.hours,
-                            a.project.name,
-                            a.task.name,
-                            a.description.as_ref().unwrap_or(&String::new()).to_string()
-                        );
+                        println!("Activity Duration: {} hours", a.hours);
                 } else {
                     println!("Could not stop timer since it was not on");
                 }
