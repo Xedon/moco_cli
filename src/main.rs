@@ -11,9 +11,9 @@ use log::trace;
 use utils::{render_table, promp_task_select, promp_activitie_select};
 
 use crate::moco::model::{
-    CreateActivitie,
     GetActivitie,
-    EditActivitie,
+    CreateActivitie,
+    DeleteActivitie,
     ControlActivitieTimer
 };
 
@@ -215,7 +215,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 })
                 .await?;
         }
-        cli::Commands::Rm => println!("not yet implemented"),
+        cli::Commands::Rm { activity } => {
+            let activity = promp_activitie_select(&moco_client, activity).await?;
+
+            moco_client
+                .delete_activitie(&DeleteActivitie {
+                    activity_id: activity.id,
+                    ..Default::default()
+                })
+                .await?;
+        },
         cli::Commands::Timer { system, activity } => match system {
             cli::Timer::Start => {
                 let activity = promp_activitie_select(&moco_client, activity).await?;
