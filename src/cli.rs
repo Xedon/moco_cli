@@ -50,6 +50,14 @@ pub enum Commands {
     Add,  // add moco time exiting entry
     Edit, // edit moco time/description of exising entry
     Rm,   // delete moco entry
+    #[clap(about = "Start/Stop activity timer", long_about = None)]
+    Timer {
+        #[clap(arg_enum)]
+        system: Timer,
+
+        #[clap(long)]
+        activity: Option<i64>,
+    },
     Sync {
         #[clap(arg_enum,default_value_t = Sync::Jira)]
         system: Sync,
@@ -78,6 +86,12 @@ pub enum Commands {
 pub enum Login {
     Moco,
     Jira,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
+pub enum Timer {
+    Start,
+    Stop,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
