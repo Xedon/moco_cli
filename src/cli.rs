@@ -17,10 +17,12 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
+    #[clap(about = "Login into (Moco/Jira)", long_about = None)]
     Login {
         #[clap(arg_enum,default_value_t = Login::Moco)]
         system: Login,
-    }, // login
+    },
+    #[clap(about = "List activities", long_about = None)]
     List {
         #[clap(long)]
         today: bool,
@@ -30,7 +32,8 @@ pub enum Commands {
 
         #[clap(long)]
         month: bool,
-    }, // list existing moco entrys
+    },
+    #[clap(about = "Create new activity", long_about = None)]
     New {
         #[clap(long)]
         project: Option<i64>,
@@ -46,9 +49,12 @@ pub enum Commands {
 
         #[clap(long)]
         description: Option<String>,
-    }, // create moco entry
-    Add,  // add moco time exiting entry
-    Edit, // edit moco time/description of exising entry
+    },
+    #[clap(about = "Edit activity", long_about = None)]
+    Edit {
+        #[clap(long)]
+        activity: Option<i64>,
+    },
     #[clap(about = "Delete activity", long_about = None)]
     Rm {
         #[clap(long)]
@@ -62,6 +68,7 @@ pub enum Commands {
         #[clap(long)]
         activity: Option<i64>,
     },
+    #[clap(about = "Sync missing Jira Tempo logs to moco", long_about = None)]
     Sync {
         #[clap(arg_enum,default_value_t = Sync::Jira)]
         system: Sync,

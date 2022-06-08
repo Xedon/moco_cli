@@ -1,21 +1,16 @@
 use std::{cell::RefCell, error::Error, io::Write, sync::Arc, vec};
 
 use crate::{
-    moco::client::MocoClient,
+    moco::{client::MocoClient, model::EditActivitie},
     utils::{ask_question, mandatory_validator, optional_validator},
 };
 
 use chrono::Utc;
 use jira_tempo::client::JiraTempoClient;
 use log::trace;
-use utils::{render_table, promp_task_select, promp_activitie_select};
+use utils::{promp_activitie_select, promp_task_select, render_table};
 
-use crate::moco::model::{
-    GetActivitie,
-    CreateActivitie,
-    DeleteActivitie,
-    ControlActivitieTimer
-};
+use crate::moco::model::{ControlActivitieTimer, CreateActivitie, DeleteActivitie, GetActivitie};
 
 mod cli;
 mod config;
@@ -173,7 +168,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 })
                 .await?;
         }
-        cli::Commands::Add => println!("not yet implemented"),
         cli::Commands::Edit { activity } => {
             let activity = promp_activitie_select(&moco_client, activity).await?;
 
@@ -187,7 +181,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 date = now.clone()
             }
 
-            print!("New duration in hours - Default '{}': ", activity.hours.to_string());
+            print!("New duration in hours - Default '{}': ", activity.hours);
             std::io::stdout().flush()?;
 
             let mut hours = utils::read_line()?;
@@ -200,7 +194,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
             let mut description = utils::read_line()?;
             if description.is_empty() {
-                description = activity.description.as_ref().unwrap_or(&String::new()).to_string()
+                description = activity
+                    .description
+                    .as_ref()
+                    .unwrap_or(&String::new())
+                    .to_string()
             }
 
             moco_client
@@ -211,7 +209,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     date,
                     description,
                     hours,
-                    ..Default::default()
                 })
                 .await?;
         }
@@ -221,10 +218,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
             moco_client
                 .delete_activitie(&DeleteActivitie {
                     activity_id: activity.id,
-                    ..Default::default()
                 })
                 .await?;
-        },
+        }
         cli::Commands::Timer { system, activity } => match system {
             cli::Timer::Start => {
                 let activity = promp_activitie_select(&moco_client, activity).await?;
@@ -233,7 +229,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     .control_activitie_timer(&ControlActivitieTimer {
                         control: "start".to_string(),
                         activity_id: activity.id,
-                        ..Default::default()
                     })
                     .await?;
             }
@@ -250,22 +245,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         .control_activitie_timer(&ControlActivitieTimer {
                             control: "stop".to_string(),
                             activity_id: a.id,
-                            ..Default::default()
                         })
                         .await?;
 
                     let a = moco_client
-                        .get_activitie(&GetActivitie {
-                            activity_id: a.id,
-                            ..Default::default()
-                        })
+                        .get_activitie(&GetActivitie { activity_id: a.id })
                         .await?;
-                        println!("Activity Duration: {} hours", a.hours);
+                    println!("Activity Duration: {} hours", a.hours);
                 } else {
                     println!("Could not stop timer since it was not on");
                 }
             }
-        }
+        },
         cli::Commands::Sync {
             system,
             today,
