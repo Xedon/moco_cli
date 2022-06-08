@@ -3,14 +3,8 @@ use std::{cell::RefCell, error::Error, sync::Arc};
 use reqwest::Client;
 
 use crate::moco::model::{
-    Activitie,
-    GetActivitie,
-    CreateActivitie,
-    EditActivitie,
-    DeleteActivitie,
-    ControlActivitieTimer,
-    Employment,
-    Projects
+    Activitie, ControlActivitieTimer, CreateActivitie, DeleteActivitie, EditActivitie, Employment,
+    GetActivitie, Projects,
 };
 
 use crate::config::AppConfig;
@@ -26,6 +20,7 @@ enum MocoClientError {
 }
 impl Error for MocoClientError {}
 
+#[allow(clippy::await_holding_refcell_ref)]
 impl MocoClient {
     pub fn new(app_config: &Arc<RefCell<AppConfig>>) -> Self {
         MocoClient {
@@ -107,7 +102,10 @@ impl MocoClient {
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => Ok(self
                 .client
-                .get(format!("https://{company}.mocoapp.com/api/v1/activities/{}", payload.activity_id))
+                .get(format!(
+                    "https://{company}.mocoapp.com/api/v1/activities/{}",
+                    payload.activity_id
+                ))
                 .header("Authorization", format!("Token token={}", api_key))
                 .send()
                 .await?
@@ -117,11 +115,7 @@ impl MocoClient {
         }
     }
 
-
-    pub async fn create_activitie(
-        &self,
-        payload: &CreateActivitie
-    ) -> Result<(), Box<dyn Error>> {
+    pub async fn create_activitie(&self, payload: &CreateActivitie) -> Result<(), Box<dyn Error>> {
         let config = &self.config.borrow();
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => {
@@ -137,13 +131,15 @@ impl MocoClient {
         }
     }
 
-
     pub async fn edit_activitie(&self, payload: &EditActivitie) -> Result<(), Box<dyn Error>> {
-      let config = &self.config.borrow();
+        let config = &self.config.borrow();
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => {
                 self.client
-                    .put(format!("https://{company}.mocoapp.com/api/v1/activities/{}", payload.activity_id))
+                    .put(format!(
+                        "https://{company}.mocoapp.com/api/v1/activities/{}",
+                        payload.activity_id
+                    ))
                     .header("Authorization", format!("Token token={}", api_key))
                     .json(payload)
                     .send()
@@ -155,7 +151,6 @@ impl MocoClient {
     }
 
     pub async fn delete_activitie(&self, payload: &DeleteActivitie) -> Result<(), Box<dyn Error>> {
-
         let config = &self.config.borrow();
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => {
@@ -175,7 +170,7 @@ impl MocoClient {
 
     pub async fn control_activitie_timer(
         &self,
-        payload: &ControlActivitieTimer
+        payload: &ControlActivitieTimer,
     ) -> Result<(), Box<dyn Error>> {
         let config = &self.config.borrow();
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
@@ -183,8 +178,7 @@ impl MocoClient {
                 self.client
                     .patch(format!(
                         "https://{company}.mocoapp.com/api/v1/activities/{}/{}_timer",
-                        payload.activity_id,
-                        payload.control
+                        payload.activity_id, payload.control
                     ))
                     .header("Authorization", format!("Token token={}", api_key))
                     .send()
@@ -194,7 +188,6 @@ impl MocoClient {
             (_, _) => Err(Box::new(MocoClientError::NotLoggedIn)),
         }
     }
-
 
     pub async fn get_assigned_projects(&self) -> Result<Projects, Box<dyn Error>> {
         let config = &self.config.borrow();

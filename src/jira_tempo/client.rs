@@ -19,6 +19,7 @@ enum JiraTempoClientError {
 }
 impl Error for JiraTempoClientError {}
 
+#[allow(clippy::await_holding_refcell_ref)]
 impl JiraTempoClient {
     pub fn new(app_config: &Arc<RefCell<AppConfig>>) -> Self {
         JiraTempoClient {
