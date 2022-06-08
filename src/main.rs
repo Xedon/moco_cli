@@ -182,32 +182,26 @@ async fn main() -> Result<(), Box<dyn Error>> {
             print!("New date (YYYY-MM-DD) - Default '{}': ", activity.date);
             std::io::stdout().flush()?;
 
-            let date = utils::read_line()?;
+            let mut date = utils::read_line()?;
             if date.is_empty() {
-                now.clone()
-            } else {
-                date.clone()
-            };
+                date = now.clone()
+            }
 
             print!("New duration in hours - Default '{}': ", activity.hours.to_string());
             std::io::stdout().flush()?;
 
-            let hours = utils::read_line()?;
+            let mut hours = utils::read_line()?;
             if hours.is_empty() {
-                activity.hours.to_string()
-            } else {
-                hours.clone()
-            };
+                hours = activity.hours.to_string()
+            }
 
             print!("New description - Default 'current': ");
             std::io::stdout().flush()?;
 
-            let description = utils::read_line()?;
+            let mut description = utils::read_line()?;
             if description.is_empty() {
-                activity.description.as_ref().unwrap_or(&String::new()).to_string()
-            } else {
-                description.clone()
-            };
+                description = activity.description.as_ref().unwrap_or(&String::new()).to_string()
+            }
 
             moco_client
                 .edit_activitie(&EditActivitie {
@@ -257,13 +251,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             ..Default::default()
                         })
                         .await?;
-                        println!(
-                            "Activity Duration: {} hours\n   Project: {}\n   Task: {}\n   Description: {}",
-                            a.hours,
-                            a.project.name,
-                            a.task.name,
-                            a.description.as_ref().unwrap_or(&String::new()).to_string()
-                        );
+                        println!("Activity Duration: {} hours", a.hours);
                 } else {
                     println!("Could not stop timer since it was not on");
                 }
