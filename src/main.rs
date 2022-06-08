@@ -10,7 +10,12 @@ use jira_tempo::client::JiraTempoClient;
 use log::trace;
 use utils::{render_table, promp_task_select, promp_activitie_select};
 
-use crate::moco::model::{CreateActivitie, GetActivitie, ControlActivitieTimer};
+use crate::moco::model::{
+    GetActivitie,
+    CreateActivitie,
+    DeleteActivitie,
+    ControlActivitieTimer
+};
 
 mod cli;
 mod config;
@@ -170,7 +175,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
         cli::Commands::Add => println!("not yet implemented"),
         cli::Commands::Edit => println!("not yet implemented"),
-        cli::Commands::Rm => println!("not yet implemented"),
+        cli::Commands::Rm { activity } => {
+            let activity = promp_activitie_select(&moco_client, activity).await?;
+
+            moco_client
+                .delete_activitie(&DeleteActivitie {
+                    activity_id: activity.id,
+                    ..Default::default()
+                })
+                .await?;
+        },
         cli::Commands::Timer { system, activity } => match system {
             cli::Timer::Start => {
                 let activity = promp_activitie_select(&moco_client, activity).await?;

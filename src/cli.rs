@@ -49,7 +49,11 @@ pub enum Commands {
     }, // create moco entry
     Add,  // add moco time exiting entry
     Edit, // edit moco time/description of exising entry
-    Rm,   // delete moco entry
+    #[clap(about = "Delete activity", long_about = None)]
+    Rm {
+        #[clap(long)]
+        activity: Option<i64>,
+    },
     #[clap(about = "Start/Stop activity timer", long_about = None)]
     Timer {
         #[clap(arg_enum)]
