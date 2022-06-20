@@ -136,7 +136,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             let date = if let Some(d) = date {
                 d
             } else {
-                print!("Date (YYYY-mm-DD) default ({}): ", now);
+                print!("Date (YYYY-MM-DD) - Default 'today': ");
                 std::io::stdout().flush()?;
 
                 let date = utils::read_line()?;
@@ -150,7 +150,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             let hours = if let Some(h) = hours {
                 h
             } else {
-                ask_question("Duration (hours): ", &|answer| {
+                ask_question("Duration (hours) - Default 'start timer': ", &|answer| {
                     answer.parse::<f64>().err().map(|e| format!("{}", e))
                 })?
                 .parse::<f64>()?
