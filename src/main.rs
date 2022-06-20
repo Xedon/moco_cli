@@ -1,16 +1,21 @@
 use std::{cell::RefCell, error::Error, io::Write, sync::Arc, vec};
 
 use crate::{
-    moco::{client::MocoClient, model::EditActivitie},
+    moco::{client::MocoClient, model::EditActivity},
     utils::{ask_question, mandatory_validator, optional_validator},
 };
 
 use chrono::Utc;
 use jira_tempo::client::JiraTempoClient;
 use log::trace;
-use utils::{promp_activitie_select, promp_task_select, render_table};
+use utils::{promp_activity_select, promp_task_select, render_table};
 
-use crate::moco::model::{ControlActivitieTimer, CreateActivitie, DeleteActivitie, GetActivitie};
+use crate::moco::model::{
+    ControlActivityTimer,
+    CreateActivity,
+    DeleteActivity,
+    GetActivity
+};
 
 mod cli;
 mod config;
@@ -158,7 +163,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             };
 
             moco_client
-                .create_activitie(&CreateActivitie {
+                .create_activity(&CreateActivity {
                     date,
                     project_id: project.id,
                     task_id: task.id,
@@ -169,7 +174,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .await?;
         }
         cli::Commands::Edit { activity } => {
-            let activity = promp_activitie_select(&moco_client, activity).await?;
+            let activity = promp_activity_select(&moco_client, activity).await?;
 
             let now = Utc::now().format("%Y-%m-%d").to_string();
 
@@ -202,7 +207,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
 
             moco_client
-                .edit_activitie(&EditActivitie {
+                .edit_activity(&EditActivity {
                     activity_id: activity.id,
                     project_id: activity.project.id,
                     task_id: activity.task.id,
@@ -213,20 +218,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .await?;
         }
         cli::Commands::Rm { activity } => {
-            let activity = promp_activitie_select(&moco_client, activity).await?;
+            let activity = promp_activity_select(&moco_client, activity).await?;
 
             moco_client
-                .delete_activitie(&DeleteActivitie {
+                .delete_activity(&DeleteActivity {
                     activity_id: activity.id,
                 })
                 .await?;
         }
         cli::Commands::Timer { system, activity } => match system {
             cli::Timer::Start => {
-                let activity = promp_activitie_select(&moco_client, activity).await?;
+                let activity = promp_activity_select(&moco_client, activity).await?;
 
                 moco_client
-                    .control_activitie_timer(&ControlActivitieTimer {
+                    .control_activity_timer(&ControlActivityTimer {
                         control: "start".to_string(),
                         activity_id: activity.id,
                     })
@@ -242,14 +247,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                 if let Some(a) = activity {
                     moco_client
-                        .control_activitie_timer(&ControlActivitieTimer {
+                        .control_activity_timer(&ControlActivityTimer {
                             control: "stop".to_string(),
                             activity_id: a.id,
                         })
                         .await?;
 
                     let a = moco_client
-                        .get_activitie(&GetActivitie { activity_id: a.id })
+                        .get_activity(&GetActivity { activity_id: a.id })
                         .await?;
                     println!("Activity Duration: {} hours", a.hours);
                 } else {
@@ -289,7 +294,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     )
                     .await?;
 
-                let worklogs: Vec<Result<CreateActivitie, Box<dyn Error>>> = worklogs
+                let worklogs: Vec<Result<CreateActivity, Box<dyn Error>>> = worklogs
                     .results
                     .iter()
                     .filter(|worklog| {
@@ -302,8 +307,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 == worklog.jira_worklog_id
                         })
                     })
-                    .map(|worklog| -> Result<CreateActivitie, Box<dyn Error>> {
-                        Ok(CreateActivitie {
+                    .map(|worklog| -> Result<CreateActivity, Box<dyn Error>> {
+                        Ok(CreateActivity {
                             remote_service: Some("jira".to_string()),
                             seconds: Some(worklog.time_spent_seconds),
                             date: worklog.start_date.to_string(),
@@ -376,7 +381,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                     for worklog in worklogs {
                         if let Ok(worklog) = &worklog {
-                            moco_client.create_activitie(worklog).await?;
+                            moco_client.create_activity(worklog).await?;
                         }
                     }
                     println!("Synced!");

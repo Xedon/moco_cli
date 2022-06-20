@@ -35,11 +35,11 @@ pub struct User {
     pub lastname: String,
 }
 
-// Activities
+// Activity
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Activitie {
+pub struct Activity {
     pub id: i64,
     pub date: String,
     pub hours: f64,
@@ -54,7 +54,7 @@ pub struct Activitie {
     pub remote_id: Option<String>,
     #[serde(rename = "remote_url")]
     pub remote_url: Value,
-    pub project: ActivitieProject,
+    pub project: ActivityProject,
     pub task: Task,
     pub customer: Customer,
     pub user: User,
@@ -70,7 +70,7 @@ pub struct Activitie {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ActivitieProject {
+pub struct ActivityProject {
     pub id: i64,
     pub name: String,
     pub billable: bool,
@@ -93,14 +93,14 @@ pub struct Customer {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct GetActivitie {
+pub struct GetActivity {
     #[serde(rename = "activity_id")]
     pub activity_id: i64,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateActivitie {
+pub struct CreateActivity {
     pub date: String,
     pub description: String,
     #[serde(rename = "project_id")]
@@ -120,7 +120,7 @@ pub struct CreateActivitie {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct EditActivitie {
+pub struct EditActivity {
     #[serde(rename = "activity_id")]
     pub activity_id: i64,
     #[serde(rename = "project_id")]
@@ -134,7 +134,7 @@ pub struct EditActivitie {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ControlActivitieTimer {
+pub struct ControlActivityTimer {
     pub control: String,
     #[serde(rename = "activity_id")]
     pub activity_id: i64,
@@ -142,7 +142,7 @@ pub struct ControlActivitieTimer {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct DeleteActivitie {
+pub struct DeleteActivity {
     #[serde(rename = "activity_id")]
     pub activity_id: i64,
 }
