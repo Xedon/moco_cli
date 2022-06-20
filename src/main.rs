@@ -43,7 +43,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             cli::Login::Jira => {
                 println!("Jira Tempo Login");
 
-                let api_key = ask_question("Enter your personal api key: ", &mandatory_validator)?;
+                let api_key = ask_question("Enter your personal API key: ", &mandatory_validator)?;
                 config.borrow_mut().jira_tempo_api_key = Some(api_key);
 
                 tempo_client.test_login().await?;
@@ -54,8 +54,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             cli::Login::Moco => {
                 println!("Moco Login");
 
-                let moco_company = ask_question("Enter moco company name: ", &mandatory_validator)?;
-                let api_key = ask_question("Enter your personal api key: ", &mandatory_validator)?;
+                let moco_company = ask_question("Enter Moco company name: ", &mandatory_validator)?;
+                let api_key = ask_question("Enter your personal API key: ", &mandatory_validator)?;
 
                 config.borrow_mut().moco_company = Some(moco_company);
                 config.borrow_mut().moco_api_key = Some(api_key);
@@ -86,10 +86,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .iter()
                 .map(|activity| {
                     vec![
-                        activity.customer.name.clone(),
-                        activity.task.name.clone(),
                         activity.date.clone(),
                         activity.hours.to_string(),
+                        activity.customer.name.clone(),
+                        activity.task.name.clone(),
                         activity
                             .description
                             .as_ref()
@@ -101,22 +101,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
             list.insert(
                 0,
                 vec![
+                    "Date".to_string(),
+                    "Duration (hours)".to_string(),
                     "Customer".to_string(),
                     "Task".to_string(),
-                    "Date".to_string(),
-                    "Hours".to_string(),
                     "Description".to_string(),
                 ],
             );
 
             list.push(vec![
                 "-".to_string(),
-                "-".to_string(),
-                "-".to_string(),
                 activities
                     .iter()
                     .fold(0.0, |hours, activity| activity.hours + hours)
                     .to_string(),
+                "-".to_string(),
+                "-".to_string(),
                 "".to_string(),
             ]);
 
@@ -150,7 +150,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             let hours = if let Some(h) = hours {
                 h
             } else {
-                ask_question("Time in Hours: ", &|answer| {
+                ask_question("Duration (hours): ", &|answer| {
                     answer.parse::<f64>().err().map(|e| format!("{}", e))
                 })?
                 .parse::<f64>()?
@@ -186,7 +186,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 date = now.clone()
             }
 
-            print!("New duration in hours - Default '{}': ", activity.hours);
+            print!("New duration (hours) - Default '{}': ", activity.hours);
             std::io::stdout().flush()?;
 
             let mut hours = utils::read_line()?;
@@ -256,7 +256,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     let a = moco_client
                         .get_activity(&GetActivity { activity_id: a.id })
                         .await?;
-                    println!("Activity Duration: {} hours", a.hours);
+                    println!("Activity duration: {} hours", a.hours);
                 } else {
                     println!("Could not stop timer since it was not on");
                 }
@@ -322,7 +322,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     })
                     .collect();
 
-                let output_list = vec!["Date", "Hours", "Description", "Project ID", "Task ID"];
+                let output_list = vec!["Date", "Duration (hours)", "Description", "Project ID", "Task ID"];
 
                 let mut output_list = vec![output_list.iter().map(|str| str.to_string()).collect()];
 
