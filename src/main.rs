@@ -1,16 +1,21 @@
 use std::{cell::RefCell, error::Error, io::Write, sync::Arc, vec};
 
 use crate::{
-    moco::{client::MocoClient, model::EditActivitie},
+    moco::{client::MocoClient, model::EditActivity},
     utils::{ask_question, mandatory_validator, optional_validator},
 };
 
 use chrono::Utc;
 use jira_tempo::client::JiraTempoClient;
 use log::trace;
-use utils::{promp_activitie_select, promp_task_select, render_table};
+use utils::{promp_activity_select, promp_task_select, render_table};
 
-use crate::moco::model::{ControlActivitieTimer, CreateActivitie, DeleteActivitie, GetActivitie};
+use crate::moco::model::{
+    ControlActivityTimer,
+    CreateActivity,
+    DeleteActivity,
+    GetActivity
+};
 
 mod cli;
 mod config;
@@ -38,7 +43,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             cli::Login::Jira => {
                 println!("Jira Tempo Login");
 
-                let api_key = ask_question("Enter your personal api key: ", &mandatory_validator)?;
+                let api_key = ask_question("Enter your personal API key: ", &mandatory_validator)?;
                 config.borrow_mut().jira_tempo_api_key = Some(api_key);
 
                 tempo_client.test_login().await?;
@@ -49,8 +54,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             cli::Login::Moco => {
                 println!("Moco Login");
 
-                let moco_company = ask_question("Enter moco company name: ", &mandatory_validator)?;
-                let api_key = ask_question("Enter your personal api key: ", &mandatory_validator)?;
+                let moco_company = ask_question("Enter Moco company name: ", &mandatory_validator)?;
+                let api_key = ask_question("Enter your personal API key: ", &mandatory_validator)?;
 
                 config.borrow_mut().moco_company = Some(moco_company);
                 config.borrow_mut().moco_api_key = Some(api_key);
@@ -81,10 +86,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .iter()
                 .map(|activity| {
                     vec![
-                        activity.customer.name.clone(),
-                        activity.task.name.clone(),
                         activity.date.clone(),
                         activity.hours.to_string(),
+                        activity.customer.name.clone(),
+                        activity.task.name.clone(),
                         activity
                             .description
                             .as_ref()
@@ -96,22 +101,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
             list.insert(
                 0,
                 vec![
+                    "Date".to_string(),
+                    "Duration (hours)".to_string(),
                     "Customer".to_string(),
                     "Task".to_string(),
-                    "Date".to_string(),
-                    "Hours".to_string(),
                     "Description".to_string(),
                 ],
             );
 
             list.push(vec![
                 "-".to_string(),
-                "-".to_string(),
-                "-".to_string(),
                 activities
                     .iter()
                     .fold(0.0, |hours, activity| activity.hours + hours)
                     .to_string(),
+                "-".to_string(),
+                "-".to_string(),
                 "".to_string(),
             ]);
 
@@ -131,7 +136,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             let date = if let Some(d) = date {
                 d
             } else {
-                print!("Date (YYYY-mm-DD) default ({}): ", now);
+                print!("Date (YYYY-MM-DD) - Default 'today': ");
                 std::io::stdout().flush()?;
 
                 let date = utils::read_line()?;
@@ -145,7 +150,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             let hours = if let Some(h) = hours {
                 h
             } else {
-                ask_question("Time in Hours: ", &|answer| {
+                ask_question("Duration (hours) - Default 'start timer': ", &|answer| {
                     answer.parse::<f64>().err().map(|e| format!("{}", e))
                 })?
                 .parse::<f64>()?
@@ -158,7 +163,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             };
 
             moco_client
-                .create_activitie(&CreateActivitie {
+                .create_activity(&CreateActivity {
                     date,
                     project_id: project.id,
                     task_id: task.id,
@@ -169,7 +174,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .await?;
         }
         cli::Commands::Edit { activity } => {
-            let activity = promp_activitie_select(&moco_client, activity).await?;
+            let activity = promp_activity_select(&moco_client, activity).await?;
 
             let now = Utc::now().format("%Y-%m-%d").to_string();
 
@@ -181,7 +186,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 date = now.clone()
             }
 
-            print!("New duration in hours - Default '{}': ", activity.hours);
+            print!("New duration (hours) - Default '{}': ", activity.hours);
             std::io::stdout().flush()?;
 
             let mut hours = utils::read_line()?;
@@ -202,7 +207,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
 
             moco_client
-                .edit_activitie(&EditActivitie {
+                .edit_activity(&EditActivity {
                     activity_id: activity.id,
                     project_id: activity.project.id,
                     task_id: activity.task.id,
@@ -213,20 +218,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .await?;
         }
         cli::Commands::Rm { activity } => {
-            let activity = promp_activitie_select(&moco_client, activity).await?;
+            let activity = promp_activity_select(&moco_client, activity).await?;
 
             moco_client
-                .delete_activitie(&DeleteActivitie {
+                .delete_activity(&DeleteActivity {
                     activity_id: activity.id,
                 })
                 .await?;
         }
         cli::Commands::Timer { system, activity } => match system {
             cli::Timer::Start => {
-                let activity = promp_activitie_select(&moco_client, activity).await?;
+                let activity = promp_activity_select(&moco_client, activity).await?;
 
                 moco_client
-                    .control_activitie_timer(&ControlActivitieTimer {
+                    .control_activity_timer(&ControlActivityTimer {
                         control: "start".to_string(),
                         activity_id: activity.id,
                     })
@@ -242,16 +247,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                 if let Some(a) = activity {
                     moco_client
-                        .control_activitie_timer(&ControlActivitieTimer {
+                        .control_activity_timer(&ControlActivityTimer {
                             control: "stop".to_string(),
                             activity_id: a.id,
                         })
                         .await?;
 
                     let a = moco_client
-                        .get_activitie(&GetActivitie { activity_id: a.id })
+                        .get_activity(&GetActivity { activity_id: a.id })
                         .await?;
-                    println!("Activity Duration: {} hours", a.hours);
+                    println!("Activity duration: {} hours", a.hours);
                 } else {
                     println!("Could not stop timer since it was not on");
                 }
@@ -289,7 +294,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     )
                     .await?;
 
-                let worklogs: Vec<Result<CreateActivitie, Box<dyn Error>>> = worklogs
+                let worklogs: Vec<Result<CreateActivity, Box<dyn Error>>> = worklogs
                     .results
                     .iter()
                     .filter(|worklog| {
@@ -302,8 +307,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 == worklog.jira_worklog_id
                         })
                     })
-                    .map(|worklog| -> Result<CreateActivitie, Box<dyn Error>> {
-                        Ok(CreateActivitie {
+                    .map(|worklog| -> Result<CreateActivity, Box<dyn Error>> {
+                        Ok(CreateActivity {
                             remote_service: Some("jira".to_string()),
                             seconds: Some(worklog.time_spent_seconds),
                             date: worklog.start_date.to_string(),
@@ -317,7 +322,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     })
                     .collect();
 
-                let output_list = vec!["Date", "Hours", "Description", "Project ID", "Task ID"];
+                let output_list = vec!["Date", "Duration (hours)", "Description", "Project ID", "Task ID"];
 
                 let mut output_list = vec![output_list.iter().map(|str| str.to_string()).collect()];
 
@@ -376,7 +381,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                     for worklog in worklogs {
                         if let Ok(worklog) = &worklog {
-                            moco_client.create_activitie(worklog).await?;
+                            moco_client.create_activity(worklog).await?;
                         }
                     }
                     println!("Synced!");

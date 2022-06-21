@@ -3,8 +3,14 @@ use std::{cell::RefCell, error::Error, sync::Arc};
 use reqwest::Client;
 
 use crate::moco::model::{
-    Activitie, ControlActivitieTimer, CreateActivitie, DeleteActivitie, EditActivitie, Employment,
-    GetActivitie, Projects,
+    Activity,
+    ControlActivityTimer,
+    CreateActivity,
+    DeleteActivity,
+    EditActivity,
+    Employment,
+    GetActivity,
+    Projects,
 };
 
 use crate::config::AppConfig;
@@ -65,7 +71,7 @@ impl MocoClient {
         to: String,
         task_id: Option<String>,
         term: Option<String>,
-    ) -> Result<Vec<Activitie>, Box<dyn Error>> {
+    ) -> Result<Vec<Activity>, Box<dyn Error>> {
         let mut parameter = vec![
             ("from", from),
             ("to", to),
@@ -91,13 +97,13 @@ impl MocoClient {
                 .header("Authorization", format!("Token token={}", api_key))
                 .send()
                 .await?
-                .json::<Vec<Activitie>>()
+                .json::<Vec<Activity>>()
                 .await?),
             (_, _) => Err(Box::new(MocoClientError::NotLoggedIn)),
         }
     }
 
-    pub async fn get_activitie(&self, payload: &GetActivitie) -> Result<Activitie, Box<dyn Error>> {
+    pub async fn get_activity(&self, payload: &GetActivity) -> Result<Activity, Box<dyn Error>> {
         let config = &self.config.borrow();
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => Ok(self
@@ -109,13 +115,13 @@ impl MocoClient {
                 .header("Authorization", format!("Token token={}", api_key))
                 .send()
                 .await?
-                .json::<Activitie>()
+                .json::<Activity>()
                 .await?),
             (_, _) => Err(Box::new(MocoClientError::NotLoggedIn)),
         }
     }
 
-    pub async fn create_activitie(&self, payload: &CreateActivitie) -> Result<(), Box<dyn Error>> {
+    pub async fn create_activity(&self, payload: &CreateActivity) -> Result<(), Box<dyn Error>> {
         let config = &self.config.borrow();
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => {
@@ -131,7 +137,7 @@ impl MocoClient {
         }
     }
 
-    pub async fn edit_activitie(&self, payload: &EditActivitie) -> Result<(), Box<dyn Error>> {
+    pub async fn edit_activity(&self, payload: &EditActivity) -> Result<(), Box<dyn Error>> {
         let config = &self.config.borrow();
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => {
@@ -150,7 +156,7 @@ impl MocoClient {
         }
     }
 
-    pub async fn delete_activitie(&self, payload: &DeleteActivitie) -> Result<(), Box<dyn Error>> {
+    pub async fn delete_activity(&self, payload: &DeleteActivity) -> Result<(), Box<dyn Error>> {
         let config = &self.config.borrow();
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => {
@@ -168,9 +174,9 @@ impl MocoClient {
         }
     }
 
-    pub async fn control_activitie_timer(
+    pub async fn control_activity_timer(
         &self,
-        payload: &ControlActivitieTimer,
+        payload: &ControlActivityTimer,
     ) -> Result<(), Box<dyn Error>> {
         let config = &self.config.borrow();
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {

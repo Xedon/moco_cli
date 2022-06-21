@@ -1,6 +1,6 @@
 use std::{error::Error, io::Write, vec};
 
-use crate::moco::model::{Activitie, Project, ProjectTask};
+use crate::moco::model::{Activity, Project, ProjectTask};
 use crate::moco::client::MocoClient;
 
 use chrono::Utc;
@@ -169,10 +169,10 @@ pub async fn promp_task_select(
     Ok((project.clone(), task.clone()))
 }
 
-pub async fn promp_activitie_select(
+pub async fn promp_activity_select(
     moco_client: &MocoClient,
     activity: Option<i64>,
-) -> Result<Activitie, Box<dyn Error>> {
+) -> Result<Activity, Box<dyn Error>> {
     let now = Utc::now().format("%Y-%m-%d").to_string();
 
     print!("List activities from (YYYY-MM-DD) - Default 'today': ");

@@ -68,7 +68,7 @@ pub enum Commands {
         #[clap(long)]
         activity: Option<i64>,
     },
-    #[clap(about = "Sync missing Jira Tempo logs to moco", long_about = None)]
+    #[clap(about = "Sync missing Jira Tempo logs to Moco", long_about = None)]
     Sync {
         #[clap(arg_enum,default_value_t = Sync::Jira)]
         system: Sync,
