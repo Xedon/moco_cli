@@ -30,7 +30,7 @@ pub fn init() -> Result<AppConfig, Box<dyn Error>> {
             }
             path
         }
-        None => panic!("Cant find os config directory"),
+        None => panic!("Can't find os config directory"),
     };
     Ok(Config::builder()
         .add_source(config::File::from(config_file))
@@ -46,7 +46,7 @@ impl AppConfig {
                 let json_string = serde_json::to_string(self)?;
                 write(file, json_string)?;
             }
-            None => panic!("Cant find os config directory"),
+            None => panic!("Can't find os config directory"),
         };
         Ok(())
     }
