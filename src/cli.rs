@@ -19,7 +19,7 @@ pub struct Cli {
 pub enum Commands {
     #[clap(about = "Login into (Moco/Jira)", long_about = None)]
     Login {
-        #[clap(arg_enum,default_value_t = Login::Moco)]
+        #[clap(arg_enum, default_value_t = Login::Moco)]
         system: Login,
     },
     #[clap(about = "List activities", long_about = None)]
@@ -70,7 +70,7 @@ pub enum Commands {
     },
     #[clap(about = "Sync missing Jira Tempo logs to Moco", long_about = None)]
     Sync {
-        #[clap(arg_enum,default_value_t = Sync::Jira)]
+        #[clap(arg_enum, default_value_t = Sync::Jira)]
         system: Sync,
 
         #[clap(long)]
