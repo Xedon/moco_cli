@@ -14,6 +14,7 @@ use crate::{
 
 mod cli;
 mod config;
+mod error;
 mod jira_tempo;
 mod moco;
 mod tempo;

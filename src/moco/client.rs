@@ -1,16 +1,13 @@
+use error_stack::{bail, report, IntoReport, Report, Result, ResultExt};
+use serde::de::DeserializeOwned;
 use std::{cell::RefCell, error::Error, sync::Arc};
 
 use reqwest::Client;
 
+use crate::error::MocoCliError;
 use crate::moco::model::{
-    Activity,
-    ControlActivityTimer,
-    CreateActivity,
-    DeleteActivity,
-    EditActivity,
-    Employment,
-    GetActivity,
-    Projects,
+    Activity, ControlActivityTimer, CreateActivity, DeleteActivity, EditActivity, Employment,
+    GetActivity, Projects,
 };
 
 use crate::config::AppConfig;
@@ -35,33 +32,58 @@ impl MocoClient {
         }
     }
 
+    async fn get_and_parse<T: DeserializeOwned>(
+        &self,
+        api_key: &String,
+        url: &str,
+    ) -> Result<T, MocoCliError> {
+        let response = self
+            .client
+            .get(url)
+            .header("Authorization", format!("Token token={}", api_key))
+            .send()
+            .await
+            .report()
+            .attach_printable("Failed to fetch response from moco")
+            .change_context(MocoCliError::default())?;
+
+        let content = response
+            .text()
+            .await
+            .report()
+            .attach_printable("Failed to parse server Response")
+            .change_context(MocoCliError::default())?;
+
+        serde_json::from_str::<T>(content.as_str())
+            .report()
+            .attach_printable_lazy(|| format!("Error on fetching response: {content}"))
+            .change_context(MocoCliError::default())
+    }
+
     pub async fn get_user_id(
         &self,
         firstname: String,
         lastname: String,
-    ) -> Result<Option<i64>, Box<dyn Error>> {
+    ) -> Result<Option<i64>, MocoCliError> {
         let config = &self.config.borrow();
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
-            (Some(api_key), Some(company)) => {
-                let employments = self
-                    .client
-                    .get(format!(
-                        "https://{company}.mocoapp.com/api/v1/users/employments"
-                    ))
-                    .header("Authorization", format!("Token token={}", api_key))
-                    .send()
-                    .await?
-                    .json::<Vec<Employment>>()
-                    .await?;
-                Ok(employments
-                    .iter()
-                    .find(|employment| {
-                        employment.user.firstname == firstname
-                            && employment.user.lastname == lastname
-                    })
-                    .map(|employment| employment.user.id))
-            }
-            (_, _) => Err(Box::new(MocoClientError::NotLoggedIn)),
+            (Some(api_key), Some(company)) => self
+                .get_and_parse::<Vec<Employment>>(
+                    api_key,
+                    &format!("https://{company}.mocoapp.com/api/v1/users/employments"),
+                )
+                .await
+                .and_then(|employments| {
+                    Ok(employments
+                        .iter()
+                        .find(|employment| {
+                            employment.user.firstname == firstname
+                                && employment.user.lastname == lastname
+                        })
+                        .map(|employment| employment.user.id))
+                }),
+            (None, _) => bail!(MocoCliError("Company is not set".into())),
+            (_, None) => bail!(MocoCliError("Api Key is not set".into())),
         }
     }
 
