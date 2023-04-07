@@ -155,13 +155,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
             } else {
                 let answer =
                     ask_question("Duration (hours) - Default 'start timer': ", &|answer| {
-                        answer.is_empty().then(|| None).unwrap_or_else(|| {
+                        answer.is_empty().then_some(None).unwrap_or_else(|| {
                             answer.parse::<f64>().err().map(|e| format!("{}", e))
                         })
                     })?;
                 answer
                     .is_empty()
-                    .then(|| 0_f64)
+                    .then_some(0_f64)
                     .unwrap_or_else(|| answer.parse::<f64>().unwrap())
             };
 

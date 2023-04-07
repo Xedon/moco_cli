@@ -23,7 +23,7 @@ pub fn init() -> Result<AppConfig, Box<dyn Error>> {
         Some(path) => {
             if !path.exists() {
                 if !&path.parent().unwrap().exists() {
-                    create_dir(&path.parent().unwrap())?;
+                    create_dir(path.parent().unwrap())?;
                 }
                 File::create(&path)?;
                 write(&path, "{}")?;
