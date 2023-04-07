@@ -31,7 +31,13 @@ pub enum Commands {
         week: bool,
 
         #[clap(long)]
+        last_week: bool,
+
+        #[clap(long)]
         month: bool,
+
+        #[clap(long)]
+        last_month: bool,
     },
     #[clap(about = "Create new activity", long_about = None)]
     New {
@@ -80,7 +86,13 @@ pub enum Commands {
         week: bool,
 
         #[clap(long)]
+        last_week: bool,
+
+        #[clap(long)]
         month: bool,
+
+        #[clap(long)]
+        last_month: bool,
 
         #[clap(long)]
         project: Option<i64>,

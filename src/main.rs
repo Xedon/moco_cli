@@ -24,11 +24,13 @@ mod utils;
 async fn main() -> Result<(), Box<dyn Error>> {
     let args = cli::init();
     let mut log_builder = env_logger::builder();
+
     log_builder.parse_default_env();
     if args.debug {
         log_builder.filter_level(log::LevelFilter::Trace);
     }
     log_builder.init();
+
     let config = Arc::new(RefCell::new(config::init()?));
     let moco_client = MocoClient::new(&config);
     let tempo_client = JiraTempoClient::new(&config);
@@ -65,8 +67,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 println!("🤩 Logged in 🤩")
             }
         },
-        cli::Commands::List { today, week, month } => {
-            let (from, to) = utils::select_from_to_date(today, week || !today && !month, month);
+        cli::Commands::List {
+            today,
+            week,
+            last_week,
+            month,
+            last_month,
+        } => {
+            let (from, to) = utils::select_from_to_date(today, week, last_week, month, last_month);
 
             let activities = moco_client
                 .get_activities(
@@ -267,13 +275,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
             system,
             today,
             week,
+            last_week,
             month,
+            last_month,
             dry_run,
             project,
             task,
         } => match system {
             cli::Sync::Jira => {
-                let (from, to) = utils::select_from_to_date(today, week, month);
+                let (from, to) =
+                    utils::select_from_to_date(today, week, last_week, month, last_month);
 
                 let worklogs = tempo_client
                     .get_worklogs(

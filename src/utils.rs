@@ -1,6 +1,7 @@
+use std::ops::Sub;
 use std::{error::Error, io::Write, vec};
 
-use chrono::Utc;
+use chrono::{Duration, Utc};
 
 use crate::moco::client::MocoClient;
 use crate::moco::model::{Activity, Project, ProjectTask};
@@ -72,25 +73,53 @@ pub fn render_list_select<T>(
 pub fn select_from_to_date(
     today: bool,
     week: bool,
+    last_week: bool,
     month: bool,
+    last_month: bool,
 ) -> (chrono::DateTime<Utc>, chrono::DateTime<Utc>) {
     use now::DateTimeNow;
 
     let now = Utc::now();
+
     let mut from = if today { Some(now) } else { None };
     let mut to = if today { Some(now) } else { None };
+
     from = if week {
         Some(now.beginning_of_week())
     } else {
         from
     };
     to = if week { Some(now.end_of_week()) } else { to };
+
+    from = if last_week {
+        Some(now.beginning_of_week().sub(Duration::weeks(1)))
+    } else {
+        from
+    };
+    to = if last_week {
+        Some(now.end_of_week().sub(Duration::weeks(1)))
+    } else {
+        to
+    };
+
     from = if month {
         Some(now.beginning_of_month())
     } else {
         from
     };
     to = if month { Some(now.end_of_month()) } else { to };
+
+    from = if last_month {
+        Some(now.beginning_of_month().sub(Duration::weeks(4)))
+    } else {
+        from
+    };
+    to = if last_month {
+        Some(now.end_of_month().sub(Duration::weeks(4)))
+    } else {
+        to
+    };
+
     let from = from.unwrap_or(now);
     let to = to.unwrap_or(now);
     (from, to)
