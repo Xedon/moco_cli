@@ -11,7 +11,7 @@ pub struct Cli {
     #[clap(subcommand)]
     pub command: Commands,
 
-    #[clap(long)]
+    #[clap(long, help = "Show additional information for bug reports")]
     pub debug: bool,
 }
 
@@ -44,29 +44,29 @@ pub enum Commands {
     },
     #[clap(about = "Create new activity", long_about = None)]
     New {
-        #[clap(long)]
+        #[clap(long, help = "Optional project id for the activity")]
         project: Option<i64>,
 
-        #[clap(long)]
+        #[clap(long, help = "Optional task id for the activity")]
         task: Option<i64>,
 
-        #[clap(long)]
+        #[clap(long, help = "Optional hours in format (h.m)")]
         hours: Option<f64>,
 
-        #[clap(long)]
+        #[clap(long, help = "Optional date in format (YYYY-mm-dd)")]
         date: Option<String>,
 
-        #[clap(long)]
+        #[clap(long, help = "Optional description for the activity")]
         description: Option<String>,
     },
     #[clap(about = "Edit activity", long_about = None)]
     Edit {
-        #[clap(long)]
+        #[clap(long, help = "Optional activity id")]
         activity: Option<i64>,
     },
     #[clap(about = "Delete activity", long_about = None)]
     Rm {
-        #[clap(long)]
+        #[clap(long, help = "Optional activity id")]
         activity: Option<i64>,
     },
     #[clap(about = "Start/Stop activity timer", long_about = None)]
@@ -74,7 +74,7 @@ pub enum Commands {
         #[clap(value_enum)]
         system: Timer,
 
-        #[clap(long)]
+        #[clap(long, help = "Optional activity id")]
         activity: Option<i64>,
     },
     #[clap(about = "Sync missing Jira Tempo logs to Moco", long_about = None)]
@@ -97,13 +97,13 @@ pub enum Commands {
         #[clap(long)]
         last_month: bool,
 
-        #[clap(long)]
+        #[clap(long, help = "Optional project id for the activity")]
         project: Option<i64>,
 
-        #[clap(long)]
+        #[clap(long, help = "Optional task id for the activity")]
         task: Option<i64>,
 
-        #[clap(long)]
+        #[clap(long, help = "Just list what will be booked in moco from Jira")]
         dry_run: bool,
     },
 }
