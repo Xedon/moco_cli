@@ -1,6 +1,11 @@
 # Moco CLI
 Provide CRUD CLI for Moco Activities with Jira Cloud Sync Option for faster time tracking.
 
+## How to install
+
+Download [latest release asset](https://github.com/Xedon/moco_cli/releases) for your architecture and name the binary as u want.
+Moco CLI only requieres libc which is in most cases allready installed.
+
 ## Available commands
 
 ```
