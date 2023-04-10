@@ -1,4 +1,4 @@
-use clap::{ArgEnum, Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 
 pub fn init() -> Cli {
     Cli::parse()
@@ -19,7 +19,7 @@ pub struct Cli {
 pub enum Commands {
     #[clap(about = "Login into (Moco/Jira)", long_about = None)]
     Login {
-        #[clap(arg_enum, default_value_t = Login::Moco)]
+        #[clap(value_enum, default_value_t = Login::Moco)]
         system: Login,
     },
     #[clap(about = "List activities", long_about = None)]
@@ -71,7 +71,7 @@ pub enum Commands {
     },
     #[clap(about = "Start/Stop activity timer", long_about = None)]
     Timer {
-        #[clap(arg_enum)]
+        #[clap(value_enum)]
         system: Timer,
 
         #[clap(long)]
@@ -79,7 +79,7 @@ pub enum Commands {
     },
     #[clap(about = "Sync missing Jira Tempo logs to Moco", long_about = None)]
     Sync {
-        #[clap(arg_enum, default_value_t = Sync::Jira)]
+        #[clap(value_enum, default_value_t = Sync::Jira)]
         system: Sync,
 
         #[clap(long)]
@@ -108,19 +108,19 @@ pub enum Commands {
     },
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum Login {
     Moco,
     Jira,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum Timer {
     Start,
     Stop,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum Sync {
     Jira,
 }
