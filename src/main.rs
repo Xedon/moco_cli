@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use std::process::exit;
 use std::{cell::RefCell, error::Error, io::Write, sync::Arc, vec};
 
 use chrono::{NaiveDate, Utc};
@@ -37,6 +38,37 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let config = Arc::new(RefCell::new(config::init()?));
     let moco_client = MocoClient::new(&config);
     let tempo_client = JiraTempoClient::new(&config);
+
+    match args.command {
+        cli::Commands::Login { system: _ } => {}
+        cli::Commands::Sync {
+            system: _,
+            today: _,
+            week: _,
+            last_week: _,
+            month: _,
+            last_month: _,
+            project: _,
+            task: _,
+            dry_run: _,
+        } => {
+            if !config.borrow().has_jira_credetials() {
+                println!("Please login to Jira with the \"login jira\" command first");
+                exit(1);
+            }
+
+            if !config.borrow().has_moco_credetials() {
+                println!("Please login to Moco with the \"login moco\" command first");
+                exit(1);
+            }
+        }
+        _ => {
+            if !config.borrow().has_moco_credetials() {
+                println!("Please login to Moco with the \"login moco\" command first");
+                exit(1);
+            }
+        }
+    }
 
     match args.command {
         cli::Commands::Login { system } => match system {

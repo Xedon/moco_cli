@@ -50,4 +50,12 @@ impl AppConfig {
         };
         Ok(())
     }
+
+    pub fn has_moco_credetials(&self) -> bool {
+        self.moco_api_key.is_some() && self.moco_company.is_some() && self.moco_user_id.is_some()
+    }
+
+    pub fn has_jira_credetials(&self) -> bool {
+        self.jira_tempo_api_key.is_some()
+    }
 }
