@@ -38,6 +38,9 @@ pub enum Commands {
 
         #[clap(long)]
         last_month: bool,
+
+        #[clap(long, help = "Sum up all activities of the day to one entry")]
+        compact: bool,
     },
     #[clap(about = "Create new activity", long_about = None)]
     New {

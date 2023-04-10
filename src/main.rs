@@ -1,9 +1,12 @@
+use std::collections::HashMap;
+
 use std::{cell::RefCell, error::Error, io::Write, sync::Arc, vec};
 
-use chrono::Utc;
-use log::trace;
+use chrono::{NaiveDate, Utc};
+use log::{log_enabled, trace};
 
 use jira_tempo::client::JiraTempoClient;
+
 use utils::{prompt_activity_select, prompt_task_select, render_table};
 
 use crate::moco::model::{ControlActivityTimer, CreateActivity, DeleteActivity, GetActivity};
@@ -73,10 +76,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
             last_week,
             month,
             last_month,
+            compact,
         } => {
             let (from, to) = utils::select_from_to_date(today, week, last_week, month, last_month);
 
-            let activities = moco_client
+            let mut activities = moco_client
                 .get_activities(
                     from.format("%Y-%m-%d").to_string(),
                     to.format("%Y-%m-%d").to_string(),
@@ -85,43 +89,85 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 )
                 .await?;
 
-            let mut list: Vec<Vec<String>> = activities
+            if log_enabled!(log::Level::Trace) {
+                trace!("{:#?}", activities);
+            }
+
+            activities.sort_by(|a, b| {
+                NaiveDate::parse_from_str(a.date.as_str(), "%Y-%m-%d")
+                    .unwrap()
+                    .cmp(&NaiveDate::parse_from_str(b.date.as_str(), "%Y-%m-%d").unwrap())
+            });
+
+            let hours_sum = activities
                 .iter()
-                .map(|activity| {
-                    vec![
-                        activity.date.clone(),
-                        activity.hours.to_string(),
-                        activity.customer.name.clone(),
-                        activity.task.name.clone(),
-                        activity
-                            .description
-                            .as_ref()
-                            .unwrap_or(&String::new())
-                            .to_string(),
-                    ]
-                })
-                .collect();
-            list.insert(
-                0,
-                vec![
+                .fold(0.0, |hours, activity| activity.hours + hours)
+                .to_string();
+
+            let mut list: Vec<Vec<String>> = vec![];
+
+            if compact {
+                list.push(vec!["Date".to_string(), "Duration (hours)".to_string()]);
+                let mut activities_peer_day: Vec<Vec<String>> = activities
+                    .iter()
+                    .fold(HashMap::new(), |mut acc: HashMap<&str, f64>, activity| {
+                        let date = activity.date.as_str();
+                        let hours = activity.hours;
+                        acc.insert(date, acc.get(date).map_or(hours, |x| hours + x));
+                        acc
+                    })
+                    .iter()
+                    .map(|(date, hours)| vec![date.to_string(), format!("{}", hours)])
+                    .collect();
+
+                activities_peer_day.sort_by(|a, b| {
+                    NaiveDate::parse_from_str(a[0].as_str(), "%Y-%m-%d")
+                        .unwrap()
+                        .cmp(&NaiveDate::parse_from_str(b[0].as_str(), "%Y-%m-%d").unwrap())
+                });
+
+                list.append(&mut activities_peer_day);
+
+                list.push(vec!["-".to_string(), hours_sum]);
+            } else {
+                list.push(vec![
                     "Date".to_string(),
                     "Duration (hours)".to_string(),
                     "Customer".to_string(),
                     "Task".to_string(),
                     "Description".to_string(),
-                ],
-            );
+                ]);
 
-            list.push(vec![
-                "-".to_string(),
-                activities
+                let mut mapped_activities: Vec<Vec<String>> = activities
                     .iter()
-                    .fold(0.0, |hours, activity| activity.hours + hours)
-                    .to_string(),
-                "-".to_string(),
-                "-".to_string(),
-                "".to_string(),
-            ]);
+                    .map(|activity| {
+                        vec![
+                            activity.date.clone(),
+                            activity.hours.to_string(),
+                            activity.customer.name.clone(),
+                            activity.task.name.clone(),
+                            activity
+                                .description
+                                .as_ref()
+                                .unwrap_or(&String::new())
+                                .to_string(),
+                        ]
+                    })
+                    .collect();
+
+                list.append(&mut mapped_activities);
+
+                list.push(vec![
+                    "-".to_string(),
+                    activities
+                        .iter()
+                        .fold(0.0, |hours, activity| activity.hours + hours)
+                        .to_string(),
+                    "-".to_string(),
+                    "-".to_string(),
+                    "".to_string(),
+                ]);
+            }
 
             render_table(list);
         }
