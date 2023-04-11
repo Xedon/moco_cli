@@ -1,5 +1,5 @@
+use std::error::Error;
 use std::ops::Sub;
-use std::{error::Error, io::Write, vec};
 
 use chrono::{Duration, Utc};
 
