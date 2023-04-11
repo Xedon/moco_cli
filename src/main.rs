@@ -57,13 +57,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 exit(1);
             }
 
-            if !config.borrow().has_moco_credetials() {
+            if !config.borrow().has_moco_credentials() {
                 println!("Please login to Moco with the \"login moco\" command first");
                 exit(1);
             }
         }
         _ => {
-            if !config.borrow().has_moco_credetials() {
+            if !config.borrow().has_moco_credentials() {
                 println!("Please login to Moco with the \"login moco\" command first");
                 exit(1);
             }
