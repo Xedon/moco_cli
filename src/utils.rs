@@ -1,5 +1,6 @@
+use std::error::Error;
+use std::io::Write;
 use std::ops::Sub;
-use std::{error::Error, io::Write, vec};
 
 use chrono::{Duration, Utc};
 
@@ -47,7 +48,7 @@ pub fn render_table(list: Vec<Vec<String>>) {
 pub fn render_list_select<T>(
     list: &[T],
     headline: Vec<&str>,
-    promt: &str,
+    prompt: &str,
     linenderer: &dyn Fn((usize, &T)) -> Vec<String>,
 ) -> Result<usize, Box<dyn Error>> {
     loop {
@@ -56,7 +57,7 @@ pub fn render_list_select<T>(
         rendered_list.insert(0, headline.iter().map(|x| x.to_string()).collect());
         render_table(rendered_list);
 
-        print!("{}", promt);
+        print!("{}", prompt);
         std::io::stdout().flush()?;
 
         let index_input = read_line().map(|x| x.parse::<usize>().ok()).ok().flatten();
@@ -66,7 +67,7 @@ pub fn render_list_select<T>(
                 return Ok(index);
             }
         }
-        println!("Index Invallid")
+        println!("Index invalid")
     }
 }
 
@@ -167,7 +168,7 @@ pub async fn prompt_task_select(
         let project_index = render_list_select(
             &projects,
             vec!["Index", "Customer", "Project", "Project ID"],
-            "Chose your Project: ",
+            "Choose your Project: ",
             &(|(index, project)| {
                 vec![
                     index.to_string(),
@@ -189,7 +190,7 @@ pub async fn prompt_task_select(
         let task_index = render_list_select(
             &project.tasks,
             vec!["Index", "Task", "Task ID"],
-            "Chose your Task: ",
+            "Choose your Task: ",
             &(|(index, task)| vec![index.to_string(), task.name.clone(), task.id.to_string()]),
         )?;
         &project.tasks[task_index]
@@ -236,7 +237,7 @@ pub async fn prompt_activity_select(
                 "Task",
                 "Description",
             ],
-            "Choose your Acitivity: ",
+            "Choose your Activity: ",
             &(|(index, activity)| {
                 vec![
                     index.to_string(),
