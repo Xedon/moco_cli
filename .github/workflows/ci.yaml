@@ -17,10 +17,16 @@ jobs:
         include:
           - os: windows-latest
             filename: mococli.exe
-          - os: ubuntu-latest
+            output_filename: windows-mococli
+          - os: ubuntu-22.04
             filename: mococli
+            output_filename: ubuntu-22-mococli
+          - os: ubuntu-20.04
+            filename: mococli
+            output_filename: ubuntu-20-mococli
           - os: macos-latest
             filename: mococli
+            output_filename: macos-mococli
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -34,7 +40,6 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Check clippy
         run: cargo clippy -- -D warnings
@@ -50,6 +55,6 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: target/release/${{ matrix.filename }}
-          asset_name: ${{ runner.os }}-${{ matrix.filename }}
+          asset_name: ${{ matrix.output_filename }}
           asset_content_type: application/octet-stream
         if: ${{ github.event_name == 'release' }}
