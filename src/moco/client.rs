@@ -1,23 +1,18 @@
-use std::{cell::RefCell, error::Error, sync::Arc};
+use std::{error::Error, sync::Arc};
 
 use reqwest::Client;
+use tokio::sync::RwLock;
 
 use crate::moco::model::{
-    Activity,
-    ControlActivityTimer,
-    CreateActivity,
-    DeleteActivity,
-    EditActivity,
-    Employment,
-    GetActivity,
-    Projects,
+    Activity, ControlActivityTimer, CreateActivity, DeleteActivity, EditActivity, Employment,
+    GetActivity, Projects,
 };
 
 use crate::config::AppConfig;
 
 pub struct MocoClient {
     client: Client,
-    config: Arc<RefCell<AppConfig>>,
+    config: Arc<RwLock<AppConfig>>,
 }
 
 #[derive(Debug, derive_more::Display)]
@@ -26,9 +21,8 @@ enum MocoClientError {
 }
 impl Error for MocoClientError {}
 
-#[allow(clippy::await_holding_refcell_ref)]
 impl MocoClient {
-    pub fn new(app_config: &Arc<RefCell<AppConfig>>) -> Self {
+    pub fn new(app_config: &Arc<RwLock<AppConfig>>) -> Self {
         MocoClient {
             client: Client::new(),
             config: app_config.clone(),
@@ -40,7 +34,7 @@ impl MocoClient {
         firstname: String,
         lastname: String,
     ) -> Result<Option<i64>, Box<dyn Error>> {
-        let config = &self.config.borrow();
+        let config = self.config.read().await;
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => {
                 let employments = self
@@ -77,7 +71,7 @@ impl MocoClient {
             ("to", to),
             (
                 "user_id",
-                format!("{}", &self.config.borrow().moco_user_id.unwrap()),
+                format!("{}", &self.config.read().await.moco_user_id.unwrap()),
             ),
         ];
 
@@ -88,7 +82,7 @@ impl MocoClient {
             parameter.push(("term", x))
         }
 
-        let config = &self.config.borrow();
+        let config = &self.config.read().await;
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => Ok(self
                 .client
@@ -104,7 +98,7 @@ impl MocoClient {
     }
 
     pub async fn get_activity(&self, payload: &GetActivity) -> Result<Activity, Box<dyn Error>> {
-        let config = &self.config.borrow();
+        let config = &self.config.read().await;
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => Ok(self
                 .client
@@ -122,7 +116,7 @@ impl MocoClient {
     }
 
     pub async fn create_activity(&self, payload: &CreateActivity) -> Result<(), Box<dyn Error>> {
-        let config = &self.config.borrow();
+        let config = &self.config.read().await;
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => {
                 self.client
@@ -138,7 +132,7 @@ impl MocoClient {
     }
 
     pub async fn edit_activity(&self, payload: &EditActivity) -> Result<(), Box<dyn Error>> {
-        let config = &self.config.borrow();
+        let config = &self.config.read().await;
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => {
                 self.client
@@ -157,7 +151,7 @@ impl MocoClient {
     }
 
     pub async fn delete_activity(&self, payload: &DeleteActivity) -> Result<(), Box<dyn Error>> {
-        let config = &self.config.borrow();
+        let config = &self.config.read().await;
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => {
                 self.client
@@ -178,7 +172,7 @@ impl MocoClient {
         &self,
         payload: &ControlActivityTimer,
     ) -> Result<(), Box<dyn Error>> {
-        let config = &self.config.borrow();
+        let config = &self.config.read().await;
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => {
                 self.client
@@ -196,7 +190,7 @@ impl MocoClient {
     }
 
     pub async fn get_assigned_projects(&self) -> Result<Projects, Box<dyn Error>> {
-        let config = &self.config.borrow();
+        let config = &self.config.read().await;
         match (config.moco_api_key.as_ref(), config.moco_company.as_ref()) {
             (Some(api_key), Some(company)) => Ok(self
                 .client

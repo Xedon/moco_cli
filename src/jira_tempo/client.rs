@@ -1,6 +1,7 @@
-use std::{cell::RefCell, error::Error, sync::Arc};
+use std::{error::Error, sync::Arc};
 
 use reqwest::Client;
+use tokio::sync::RwLock;
 
 use crate::config::AppConfig;
 
@@ -10,7 +11,7 @@ const TEMPO_URL: &str = "https://api.tempo.io/core/3";
 
 pub struct JiraTempoClient {
     client: Client,
-    config: Arc<RefCell<AppConfig>>,
+    config: Arc<RwLock<AppConfig>>,
 }
 
 #[derive(Debug, derive_more::Display)]
@@ -19,9 +20,8 @@ enum JiraTempoClientError {
 }
 impl Error for JiraTempoClientError {}
 
-#[allow(clippy::await_holding_refcell_ref)]
 impl JiraTempoClient {
-    pub fn new(app_config: &Arc<RefCell<AppConfig>>) -> Self {
+    pub fn new(app_config: &Arc<RwLock<AppConfig>>) -> Self {
         JiraTempoClient {
             client: Client::new(),
             config: app_config.clone(),
@@ -29,7 +29,7 @@ impl JiraTempoClient {
     }
 
     pub async fn test_login(&self) -> Result<(), Box<dyn Error>> {
-        match &self.config.borrow().jira_tempo_api_key {
+        match &self.config.read().await.jira_tempo_api_key {
             Some(token) => {
                 self.client
                     .get(format!("{TEMPO_URL}/globalconfiguration"))
@@ -45,7 +45,7 @@ impl JiraTempoClient {
     pub async fn get_worklogs(&self, from: String, to: String) -> Result<Response, Box<dyn Error>> {
         let parameter = vec![("from", from), ("to", to), ("limit", "1000".to_string())];
 
-        match &self.config.borrow().jira_tempo_api_key {
+        match &self.config.read().await.jira_tempo_api_key {
             Some(token) => Ok(self
                 .client
                 .get(format!("{TEMPO_URL}/worklogs"))
