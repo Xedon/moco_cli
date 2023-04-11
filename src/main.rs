@@ -384,7 +384,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     )
                     .await?;
 
-                let worklogs: Vec<Result<CreateActivity, Box<dyn Error>>> = worklogs
+                let worklogs: Vec<CreateActivity> = worklogs
                     .results
                     .iter()
                     .filter(|worklog| {
@@ -397,18 +397,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 == worklog.jira_worklog_id
                         })
                     })
-                    .map(|worklog| -> Result<CreateActivity, Box<dyn Error>> {
-                        Ok(CreateActivity {
-                            remote_service: Some("jira".to_string()),
-                            seconds: Some(worklog.time_spent_seconds),
-                            date: worklog.start_date.to_string(),
-                            tag: Some("mococli".to_string()),
-                            project_id: project.id,
-                            task_id: task.id,
-                            description: worklog.description.clone(),
-                            remote_id: Some(worklog.jira_worklog_id.to_string()),
-                            ..Default::default()
-                        })
+                    .map(|worklog| CreateActivity {
+                        remote_service: Some("jira".to_string()),
+                        seconds: Some(worklog.time_spent_seconds),
+                        date: worklog.start_date.to_string(),
+                        tag: Some("mococli".to_string()),
+                        project_id: project.id,
+                        task_id: task.id,
+                        description: worklog.description.clone(),
+                        remote_id: Some(worklog.jira_worklog_id.to_string()),
+                        ..Default::default()
                     })
                     .collect();
 
@@ -423,28 +421,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 let mut output_list = vec![output_list.iter().map(|str| str.to_string()).collect()];
 
                 for worklog in &worklogs {
-                    if let Ok(worklog) = &worklog {
-                        output_list.push(vec![
-                            worklog.date.clone(),
-                            worklog
-                                .seconds
-                                .map(|seconds| seconds as f64 / 60.0 / 60.0)
-                                .unwrap_or(0.0)
-                                .to_string(),
-                            worklog.description.clone(),
-                            worklog.project_id.to_string(),
-                            worklog.task_id.to_string(),
-                        ])
-                    }
-                    if let Err(err) = &worklog {
-                        output_list.push(vec![
-                            "Error".to_string(),
-                            format!("{:?}", err),
-                            "".to_string(),
-                            "".to_string(),
-                            "".to_string(),
-                        ])
-                    }
+                    output_list.push(vec![
+                        worklog.date.clone(),
+                        worklog
+                            .seconds
+                            .map(|seconds| seconds as f64 / 60.0 / 60.0)
+                            .unwrap_or(0.0)
+                            .to_string(),
+                        worklog.description.clone(),
+                        worklog.project_id.to_string(),
+                        worklog.task_id.to_string(),
+                    ])
                 }
 
                 if dry_run {
@@ -476,9 +463,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     println!();
 
                     for worklog in worklogs {
-                        if let Ok(worklog) = &worklog {
-                            moco_client.create_activity(worklog).await?;
-                        }
+                        moco_client.create_activity(&worklog).await?;
                     }
                     println!("Synced!");
                 }

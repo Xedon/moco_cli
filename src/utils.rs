@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::io::Write;
 use std::ops::Sub;
 
 use chrono::{Duration, Utc};
@@ -56,7 +57,7 @@ pub fn render_list_select<T>(
         rendered_list.insert(0, headline.iter().map(|x| x.to_string()).collect());
         render_table(rendered_list);
 
-        print!("{}", promt);
+        print!("{}", prompt);
         std::io::stdout().flush()?;
 
         let index_input = read_line().map(|x| x.parse::<usize>().ok()).ok().flatten();
