@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 
+use std::io::Write;
 use std::process::exit;
-use std::{cell::RefCell, error::Error, io::Write, sync::Arc, vec};
+use std::{error::Error, sync::Arc, vec};
 
 use chrono::{NaiveDate, Utc};
 use log::{log_enabled, trace};
 
 use jira_tempo::client::JiraTempoClient;
 
+use tokio::sync::RwLock;
 use utils::{prompt_activity_select, prompt_task_select, render_table};
 
 use crate::moco::model::{ControlActivityTimer, CreateActivity, DeleteActivity, GetActivity};
@@ -35,7 +37,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
     log_builder.init();
 
-    let config = Arc::new(RefCell::new(config::init()?));
+    let config = Arc::new(RwLock::new(config::init()?));
     let moco_client = MocoClient::new(&config);
     let tempo_client = JiraTempoClient::new(&config);
 
@@ -52,18 +54,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
             task: _,
             dry_run: _,
         } => {
-            if !config.borrow().has_jira_credetials() {
+            if !config.read().await.has_jira_credetials() {
                 println!("Please login to Jira with the \"login jira\" command first");
                 exit(1);
             }
 
-            if !config.borrow().has_moco_credetials() {
+            if !config.read().await.has_moco_credetials() {
                 println!("Please login to Moco with the \"login moco\" command first");
                 exit(1);
             }
         }
         _ => {
-            if !config.borrow().has_moco_credetials() {
+            if !config.read().await.has_moco_credetials() {
                 println!("Please login to Moco with the \"login moco\" command first");
                 exit(1);
             }
@@ -76,11 +78,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 println!("Jira Tempo Login");
 
                 let api_key = ask_question("Enter your personal API key: ", &mandatory_validator)?;
-                config.borrow_mut().jira_tempo_api_key = Some(api_key);
+                config.write().await.jira_tempo_api_key = Some(api_key);
 
                 tempo_client.test_login().await?;
 
-                config.borrow_mut().write_config()?;
+                config.write().await.write_config()?;
                 println!("🤩 Logged in 🤩")
             }
             cli::Login::Moco => {
@@ -89,16 +91,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 let moco_company = ask_question("Enter Moco company name: ", &mandatory_validator)?;
                 let api_key = ask_question("Enter your personal API key: ", &mandatory_validator)?;
 
-                config.borrow_mut().moco_company = Some(moco_company);
-                config.borrow_mut().moco_api_key = Some(api_key);
+                let mut c = config.write().await;
+                c.moco_company = Some(moco_company);
+                c.moco_api_key = Some(api_key);
 
                 let firstname = ask_question("Enter firstname: ", &mandatory_validator)?;
                 let lastname = ask_question("Enter lastname:  ", &mandatory_validator)?;
 
                 let client_id = moco_client.get_user_id(firstname, lastname).await?;
 
-                config.borrow_mut().moco_user_id = client_id;
-                config.borrow_mut().write_config()?;
+                let mut c = config.write().await;
+                c.moco_user_id = client_id;
+                c.write_config()?;
                 println!("🤩 Logged in 🤩")
             }
         },
