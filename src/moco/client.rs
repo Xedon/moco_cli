@@ -22,11 +22,18 @@ enum MocoClientError {
 impl Error for MocoClientError {}
 
 impl MocoClient {
-    pub fn new(app_config: &Arc<RwLock<AppConfig>>) -> Self {
-        MocoClient {
-            client: Client::new(),
+    pub fn new(
+        app_config: &Arc<RwLock<AppConfig>>,
+        verbose_logging: bool,
+    ) -> Result<Self, reqwest::Error> {
+        let client = Client::builder()
+            .connection_verbose(verbose_logging)
+            .build()?;
+
+        Ok(MocoClient {
+            client,
             config: app_config.clone(),
-        }
+        })
     }
 
     pub async fn get_user_id(

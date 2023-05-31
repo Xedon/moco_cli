@@ -38,8 +38,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     log_builder.init();
 
     let config = Arc::new(RwLock::new(config::init()?));
-    let moco_client = MocoClient::new(&config);
-    let tempo_client = JiraTempoClient::new(&config);
+    let moco_client = MocoClient::new(&config, args.debug)?;
+    let tempo_client = JiraTempoClient::new(&config, args.debug)?;
 
     match args.command {
         cli::Commands::Login { system: _ } => {}

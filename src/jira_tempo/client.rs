@@ -21,11 +21,18 @@ enum JiraTempoClientError {
 impl Error for JiraTempoClientError {}
 
 impl JiraTempoClient {
-    pub fn new(app_config: &Arc<RwLock<AppConfig>>) -> Self {
-        JiraTempoClient {
-            client: Client::new(),
+    pub fn new(
+        app_config: &Arc<RwLock<AppConfig>>,
+        verbose_logging: bool,
+    ) -> Result<Self, reqwest::Error> {
+        let client = Client::builder()
+            .connection_verbose(verbose_logging)
+            .build()?;
+
+        Ok(JiraTempoClient {
+            client,
             config: app_config.clone(),
-        }
+        })
     }
 
     pub async fn test_login(&self) -> Result<(), Box<dyn Error>> {
